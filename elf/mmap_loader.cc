@@ -36,13 +36,13 @@ class mmap_loader : public loader {
 
   ~mmap_loader() override { munmap(base, lim); }
 
-  const void *load(off_t offset, size_t size) override {
+  auto load(off_t offset, size_t size) -> const void * override {
     if (offset + size > lim) throw range_error("offset exceeds file size");
     return (const char *)base + offset;
   }
 };
 
-std::shared_ptr<loader> create_mmap_loader(int fd) {
+auto create_mmap_loader(int fd) -> std::shared_ptr<loader> {
   return make_shared<mmap_loader>(fd);
 }
 

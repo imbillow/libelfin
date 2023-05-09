@@ -986,7 +986,7 @@ class rangelist::iterator {
   /** Move constructor */
   iterator(iterator &&o) = default;
 
-  iterator &operator=(const iterator &o) = default;
+  auto operator=(const iterator &o) -> iterator & = default;
   iterator &operator=(iterator &&o) = default;
 
   /**
@@ -1012,6 +1012,11 @@ class rangelist::iterator {
    * entry.
    */
   iterator &operator++();
+  const iterator operator++(int) {
+    iterator prev = *this;
+    ++*this;
+    return prev;
+  }
 
  private:
   std::shared_ptr<section> sec;

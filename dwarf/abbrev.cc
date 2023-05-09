@@ -9,7 +9,7 @@ using namespace std;
 
 DWARFPP_BEGIN_NAMESPACE
 
-static value::type resolve_type(DW_AT name, DW_FORM form) {
+static auto resolve_type(DW_AT name, DW_FORM form) -> value::type {
   switch (form) {
     case DW_FORM::addr:
       return value::type::address;
@@ -183,7 +183,7 @@ static value::type resolve_type(DW_AT name, DW_FORM form) {
 attribute_spec::attribute_spec(DW_AT name, DW_FORM form)
     : name(name), form(form), type(resolve_type(name, form)) {}
 
-bool abbrev_entry::read(cursor* cur) {
+auto abbrev_entry::read(cursor* cur) -> bool {
   attributes.clear();
 
   // Section 7.5.3

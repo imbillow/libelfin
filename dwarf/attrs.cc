@@ -42,8 +42,8 @@ DWARFPP_BEGIN_NAMESPACE
   }                                                     \
   static_assert(true, "")
 
-static uint64_t _at_udynamic(DW_AT attr, const die &d, expr_context *ctx,
-                             int depth = 0) {
+static auto _at_udynamic(DW_AT attr, const die &d, expr_context *ctx,
+                         int depth = 0) -> uint64_t {
   // DWARF4 section 2.19
   if (depth > 16)
     throw format_error("reference depth exceeded for " + to_string(attr));
@@ -81,7 +81,7 @@ AT_UDYNAMIC(bit_size);
 
 // XXX stmt_list
 AT_ADDRESS(low_pc);
-taddr at_high_pc(const die &d) {
+auto at_high_pc(const die &d) -> taddr {
   value v(d[DW_AT::high_pc]);
   switch (v.get_type()) {
     case value::type::address:
@@ -110,7 +110,7 @@ AT_REFERENCE(containing_type);
 // 0x2X
 //
 
-DW_INL at_inline(const die &d) {
+auto at_inline(const die &d) -> DW_INL {
   // XXX Missing attribute is equivalent to DW_INL_not_inlined
   // (DWARF4 section 3.3.8)
   return (DW_INL)d[DW_AT::inline_].as_uconstant();
@@ -135,8 +135,8 @@ AT_FLAG(artificial);
 // XXX base_types
 AT_ENUM(calling_convention, DW_CC);
 AT_UDYNAMIC(count);
-expr_result at_data_member_location(const die &d, expr_context *ctx, taddr base,
-                                    taddr pc) {
+auto at_data_member_location(const die &d, expr_context *ctx, taddr base,
+                             taddr pc) -> expr_result {
   value v(d[DW_AT::data_member_location]);
   switch (v.get_type()) {
     case value::type::constant:
@@ -163,7 +163,7 @@ AT_FLAG(external);
 //
 
 // XXX frame_base
-die at_friend(const die &d) { return d[DW_AT::friend_].as_reference(); }
+auto at_friend(const die &d) -> die { return d[DW_AT::friend_].as_reference(); }
 AT_ENUM(identifier_case, DW_ID);
 // XXX macro_info
 AT_REFERENCE(namelist_item);
@@ -190,7 +190,9 @@ AT_UDYNAMIC(byte_stride);
 AT_ADDRESS(entry_pc);
 AT_FLAG(use_UTF8);
 AT_REFERENCE(extension);
-rangelist at_ranges(const die &d) { return d[DW_AT::ranges].as_rangelist(); }
+auto at_ranges(const die &d) -> rangelist {
+  return d[DW_AT::ranges].as_rangelist();
+}
 // XXX trampoline
 // XXX const call_column, call_file, call_line
 AT_STRING(description);
@@ -220,7 +222,7 @@ AT_FLAG(const_expr);
 AT_FLAG(enum_class);
 AT_STRING(linkage_name);
 
-rangelist die_pc_range(const die &d) {
+auto die_pc_range(const die &d) -> rangelist {
   // DWARF4 section 2.17
   if (d.has(DW_AT::ranges)) return at_ranges(d);
   taddr low = at_low_pc(d);

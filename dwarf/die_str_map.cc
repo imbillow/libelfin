@@ -13,18 +13,20 @@ using namespace std;
 namespace std {
 template <>
 struct hash<dwarf::DW_TAG> {
-  typedef size_t result_type;
-  typedef dwarf::DW_TAG argument_type;
-  result_type operator()(argument_type a) const { return (result_type)a; }
+  using result_type = size_t;
+  using argument_type = dwarf::DW_TAG;
+  auto operator()(argument_type a) const -> result_type {
+    return (result_type)a;
+  }
 };
 }  // namespace std
 
 DWARFPP_BEGIN_NAMESPACE
 
 struct string_hash {
-  typedef size_t result_type;
-  typedef const char *argument_type;
-  result_type operator()(const char *s) const {
+  using result_type = size_t;
+  using argument_type = const char *;
+  auto operator()(const char *s) const -> result_type {
     result_type h = 0;
     for (; *s; ++s) h += 33 * h + *s;
     return h;
@@ -32,10 +34,10 @@ struct string_hash {
 };
 
 struct string_eq {
-  typedef bool result_type;
-  typedef const char *first_argument_type;
-  typedef const char *second_argument_type;
-  bool operator()(const char *x, const char *y) const {
+  using result_type = bool;
+  using first_argument_type = const char *;
+  using second_argument_type = const char *;
+  auto operator()(const char *x, const char *y) const -> bool {
     return strcmp(x, y) == 0;
   }
 };
@@ -58,7 +60,7 @@ die_str_map::die_str_map(const die &parent, DW_AT attr,
                          const initializer_list<DW_TAG> &accept)
     : m(make_shared<impl>(parent, attr, accept)) {}
 
-die_str_map die_str_map::from_type_names(const die &parent) {
+auto die_str_map::from_type_names(const die &parent) -> die_str_map {
   return die_str_map(parent, DW_AT::name,
                      // All DWARF type tags (this is everything that ends
                      // with _type except thrown_type).
@@ -75,7 +77,7 @@ die_str_map die_str_map::from_type_names(const die &parent) {
                       DW_TAG::shared_type,      DW_TAG::rvalue_reference_type});
 }
 
-const die &die_str_map::operator[](const char *val) const {
+auto die_str_map::operator[](const char *val) const -> const die & {
   // Do we have this value?
   auto it = m->str_map.find(val);
   if (it != m->str_map.end()) return it->second;

@@ -32,14 +32,14 @@ rangelist::rangelist(const initializer_list<pair<taddr, taddr>> &ranges) {
   base_addr = 0;
 }
 
-rangelist::iterator rangelist::begin() const {
-  if (sec) return iterator(sec, base_addr);
+auto rangelist::begin() const -> rangelist::iterator {
+  if (sec) return {sec, base_addr};
   return end();
 }
 
 rangelist::iterator rangelist::end() { return {}; }
 
-bool rangelist::contains(taddr addr) const {
+auto rangelist::contains(taddr addr) const -> bool {
   for (auto ent : *this)
     if (ent.contains(addr)) return true;
   return false;
@@ -51,7 +51,7 @@ rangelist::iterator::iterator(std::shared_ptr<section> sec, taddr base_addr)
   ++(*this);
 }
 
-rangelist::iterator &rangelist::iterator::operator++() {
+auto rangelist::iterator::operator++() -> rangelist::iterator & {
   // DWARF4 section 2.17.3
   taddr largest_offset = ~(taddr)0;
   if (sec->addr_size < sizeof(taddr))

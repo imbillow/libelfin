@@ -11,7 +11,7 @@ using namespace std;
 
 DWARFPP_BEGIN_NAMESPACE
 
-int64_t cursor::sleb128() {
+auto cursor::sleb128() -> int64_t {
   // Appendix C
   uint64_t result = 0;
   unsigned shift = 0;
@@ -29,7 +29,7 @@ int64_t cursor::sleb128() {
   return 0;
 }
 
-shared_ptr<section> cursor::subsection() {
+auto cursor::subsection() -> shared_ptr<section> {
   // Section 7.4
   const char *begin = pos;
   section_length length = fixed<uword>();
@@ -61,7 +61,7 @@ void cursor::skip_initial_length() {
   }
 }
 
-section_offset cursor::offset() {
+auto cursor::offset() -> section_offset {
   switch (sec->fmt) {
     case format::dwarf32:
       return fixed<uint32_t>();
@@ -79,7 +79,7 @@ void cursor::string(std::string &out) {
   memmove(&out.front(), p, size);
 }
 
-const char *cursor::cstr(size_t *size_out) {
+auto cursor::cstr(size_t *size_out) -> const char * {
   // Scan string size
   const char *p = pos;
   while (pos < sec->end && *pos) pos++;

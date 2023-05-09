@@ -13,16 +13,17 @@ expr_context no_expr_context;
 expr::expr(const unit *cu, section_offset offset, section_length len)
     : cu(cu), offset(offset), len(len) {}
 
-expr_result expr::evaluate(expr_context *ctx) const {
+auto expr::evaluate(expr_context *ctx) const -> expr_result {
   return evaluate(ctx, {});
 }
 
-expr_result expr::evaluate(expr_context *ctx, taddr argument) const {
+auto expr::evaluate(expr_context *ctx, taddr argument) const -> expr_result {
   return evaluate(ctx, {argument});
 }
 
-expr_result expr::evaluate(
-    expr_context *ctx, const std::initializer_list<taddr> &arguments) const {
+auto expr::evaluate(expr_context *ctx,
+                    const std::initializer_list<taddr> &arguments) const
+    -> expr_result {
   // The stack machine's stack.  The top of the stack is
   // stack.back().
   // XXX This stack must be in target machine representation,

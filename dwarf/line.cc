@@ -42,14 +42,14 @@ struct line_table::impl {
   // iterate over the line number program repeatedly, this keeps
   // track of how far we've gotten so we don't add the same
   // entry twice.
-  section_offset last_file_name_end;
+  section_offset last_file_name_end{0};
   // If an iterator has traversed the entire program, then we
   // know we've gathered all file names.
-  bool file_names_complete;
+  bool file_names_complete{false};
 
-  impl() : last_file_name_end(0), file_names_complete(false){};
+  impl(){};
 
-  bool read_file_entry(cursor *cur, bool in_header);
+  auto read_file_entry(cursor *cur, bool in_header) -> bool;
 };
 
 line_table::line_table(const shared_ptr<section> &sec, section_offset offset,
@@ -138,17 +138,17 @@ line_table::line_table(const shared_ptr<section> &sec, section_offset offset,
     ;
 }
 
-line_table::iterator line_table::begin() const {
+auto line_table::begin() const -> line_table::iterator {
   if (!valid()) return {nullptr, 0};
   return {this, m->program_offset};
 }
 
-line_table::iterator line_table::end() const {
+auto line_table::end() const -> line_table::iterator {
   if (!valid()) return {nullptr, 0};
   return {this, m->sec->size()};
 }
 
-line_table::iterator line_table::find_address(taddr addr) const {
+auto line_table::find_address(taddr addr) const -> line_table::iterator {
   iterator prev = begin(), e = end();
   if (prev == e) return prev;
 
@@ -161,7 +161,7 @@ line_table::iterator line_table::find_address(taddr addr) const {
   return prev;
 }
 
-const line_table::file *line_table::get_file(unsigned index) const {
+auto line_table::get_file(unsigned index) const -> const line_table::file * {
   if (index >= m->file_names.size()) {
     // It could be declared in the line table program.
     // This is unlikely, so we don't have to be
@@ -178,7 +178,7 @@ const line_table::file *line_table::get_file(unsigned index) const {
   return &m->file_names[index];
 }
 
-bool line_table::impl::read_file_entry(cursor *cur, bool in_header) {
+auto line_table::impl::read_file_entry(cursor *cur, bool in_header) -> bool {
   assert(cur->sec == sec);
 
   string file_name;
@@ -217,7 +217,7 @@ void line_table::entry::reset(bool is_stmt) {
   isa = discriminator = 0;
 }
 
-string line_table::entry::get_description() const {
+auto line_table::entry::get_description() const -> string {
   string res = file->path;
   if (line) {
     res.append(":").append(std::to_string(line));
@@ -234,7 +234,7 @@ line_table::iterator::iterator(const line_table *table, section_offset pos)
   }
 }
 
-line_table::iterator &line_table::iterator::operator++() {
+auto line_table::iterator::operator++() -> line_table::iterator & {
   cursor cur(table->m->sec, pos);
 
   // Execute opcodes until we reach the end of the stream or an
@@ -262,7 +262,7 @@ line_table::iterator &line_table::iterator::operator++() {
   return *this;
 }
 
-bool line_table::iterator::step(cursor *cur) {
+auto line_table::iterator::step(cursor *cur) -> bool {
   struct line_table::impl *m = table->m.get();
 
   // Read the opcode (DWARF4 section 6.2.3)

@@ -46,7 +46,7 @@ static const struct {
     {".debug_tu_index", section_type::tu_index},
 };
 
-bool elf::section_name_to_type(const char *name, section_type *out) {
+auto elf::section_name_to_type(const char *name, section_type *out) -> bool {
   return std::ranges::any_of(sections, [out, name](auto &x) {
     if (strcmp(x.name, name) == 0) {
       *out = x.type;
@@ -56,7 +56,7 @@ bool elf::section_name_to_type(const char *name, section_type *out) {
   });
 }
 
-const char *elf::section_type_to_name(section_type type) {
+auto elf::section_type_to_name(section_type type) -> const char * {
   for (auto &sec : sections) {
     if (sec.type == type) return sec.name;
   }

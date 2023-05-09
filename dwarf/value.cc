@@ -16,11 +16,11 @@ value::value(const unit *cu, DW_AT name, DW_FORM form, type typ,
   if (form == DW_FORM::indirect) resolve_indirect(name);
 }
 
-section_offset value::get_section_offset() const {
+auto value::get_section_offset() const -> section_offset {
   return cu->get_section_offset() + offset;
 }
 
-taddr value::as_address() const {
+auto value::as_address() const -> taddr {
   if (form != DW_FORM::addr)
     throw value_type_mismatch("cannot read " + to_string(typ) + " as address");
 
@@ -28,7 +28,7 @@ taddr value::as_address() const {
   return cur.address();
 }
 
-const void *value::as_block(size_t *size_out) const {
+auto value::as_block(size_t *size_out) const -> const void * {
   // XXX Blocks can contain all sorts of things, including
   // references, which couldn't be resolved by callers in the
   // current minimal API.
@@ -54,7 +54,7 @@ const void *value::as_block(size_t *size_out) const {
   return cur.pos;
 }
 
-uint64_t value::as_uconstant() const {
+auto value::as_uconstant() const -> uint64_t {
   cursor cur(cu->data(), offset);
   switch (form) {
     case DW_FORM::data1:
@@ -73,7 +73,7 @@ uint64_t value::as_uconstant() const {
   }
 }
 
-int64_t value::as_sconstant() const {
+auto value::as_sconstant() const -> int64_t {
   cursor cur(cu->data(), offset);
   switch (form) {
     case DW_FORM::data1:
@@ -92,7 +92,7 @@ int64_t value::as_sconstant() const {
   }
 }
 
-expr value::as_exprloc() const {
+auto value::as_exprloc() const -> expr {
   cursor cur(cu->data(), offset);
   size_t size;
   // Prior to DWARF 4, exprlocs were encoded as blocks.
@@ -117,7 +117,7 @@ expr value::as_exprloc() const {
   return {cu, cur.get_section_offset(), size};
 }
 
-bool value::as_flag() const {
+auto value::as_flag() const -> bool {
   switch (form) {
     case DW_FORM::flag: {
       cursor cur(cu->data(), offset);
@@ -129,12 +129,12 @@ bool value::as_flag() const {
       throw value_type_mismatch("cannot read " + to_string(typ) + " as flag");
   }
 }
-loclist value::as_loclist() const {
+auto value::as_loclist() const -> loclist {
   cursor cur(cu->data(), offset);
   return {cu, cur.get_section_offset()};
 }
 
-rangelist value::as_rangelist() const {
+auto value::as_rangelist() const -> rangelist {
   section_offset off = as_sec_offset();
 
   // The compilation unit may not have a base address.  In this
@@ -148,7 +148,7 @@ rangelist value::as_rangelist() const {
   return rangelist(sec, off, cusec->addr_size, cu_low_pc);
 }
 
-die value::as_reference() const {
+auto value::as_reference() const -> die {
   section_offset off;
   // XXX Would be nice if we could avoid this.  The cursor is
   // all overhead here.
@@ -211,13 +211,13 @@ void value::as_string(string &buf) const {
   memmove(&buf.front(), p, size);
 }
 
-string value::as_string() const {
+auto value::as_string() const -> string {
   size_t size;
   const char *s = as_cstr(&size);
   return string(s, size);
 }
 
-const char *value::as_cstr(size_t *size_out) const {
+auto value::as_cstr(size_t *size_out) const -> const char * {
   cursor cur(cu->data(), offset);
   switch (form) {
     case DW_FORM::string:
@@ -232,7 +232,7 @@ const char *value::as_cstr(size_t *size_out) const {
   }
 }
 
-section_offset value::as_sec_offset() const {
+auto value::as_sec_offset() const -> section_offset {
   // Prior to DWARF 4, sec_offsets were encoded as data4 or
   // data8.
   cursor cur(cu->data(), offset);
@@ -261,7 +261,7 @@ void value::resolve_indirect(DW_AT name) {
   offset = c.get_section_offset();
 }
 
-string to_string(const value &v) {
+auto to_string(const value &v) -> string {
   switch (v.get_type()) {
     case value::type::invalid:
       return "<invalid value type>";

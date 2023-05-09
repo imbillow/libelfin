@@ -8,7 +8,7 @@
 #include "internal.hh"
 
 DWARFPP_BEGIN_NAMESPACE
-expr_result loclist::evaluate(expr_context *ctx) const {
+auto loclist::evaluate(expr_context *ctx) const -> expr_result {
   cursor cur{cu->data(), offset};
   auto loc_offset = cur.fixed<uint32_t>();
 

@@ -15,8 +15,7 @@ DWARFPP_BEGIN_NAMESPACE
 //
 
 struct dwarf::impl {
-  explicit impl(std::shared_ptr<loader> l)
-      : l(std::move(l)), have_type_units(false) {}
+  explicit impl(std::shared_ptr<loader> l) : l(std::move(l)) {}
 
   std::shared_ptr<loader> l;
 
@@ -26,7 +25,7 @@ struct dwarf::impl {
   std::vector<compilation_unit> compilation_units;
 
   std::unordered_map<uint64_t, type_unit> type_units;
-  bool have_type_units;
+  bool have_type_units{false};
 
   std::map<section_type, std::shared_ptr<section>> sections;
 };
@@ -75,13 +74,13 @@ dwarf::dwarf(const std::shared_ptr<loader> &_loader)
 
 dwarf::~dwarf() = default;
 
-const std::vector<compilation_unit> &dwarf::compilation_units() const {
+auto dwarf::compilation_units() const -> const std::vector<compilation_unit> & {
   static std::vector<compilation_unit> empty;
   if (!m) return empty;
   return m->compilation_units;
 }
 
-const type_unit &dwarf::get_type_unit(uint64_t type_signature) const {
+auto dwarf::get_type_unit(uint64_t type_signature) const -> const type_unit & {
   if (!m->have_type_units) {
     cursor tucur(get_section(section_type::types));
     while (!tucur.end()) {
@@ -97,7 +96,7 @@ const type_unit &dwarf::get_type_unit(uint64_t type_signature) const {
   return m->type_units[type_signature];
 }
 
-std::shared_ptr<section> dwarf::get_section(section_type type) const {
+auto dwarf::get_section(section_type type) const -> std::shared_ptr<section> {
   if (type == section_type::info) return m->sec_info;
   if (type == section_type::abbrev) return m->sec_abbrev;
 
@@ -141,7 +140,7 @@ struct unit::impl {
   // Map from abbrev code to abbrev.  If the map is dense, it
   // will be stored in the vector; otherwise it will be stored
   // in the map.
-  bool have_abbrevs;
+  bool have_abbrevs{false};
   std::vector<abbrev_entry> abbrevs_vec;
   std::unordered_map<abbrev_code, abbrev_entry> abbrevs_map;
 
@@ -154,19 +153,18 @@ struct unit::impl {
         debug_abbrev_offset(debug_abbrev_offset),
         root_offset(root_offset),
         type_signature(type_signature),
-        type_offset(type_offset),
-        have_abbrevs(false) {}
+        type_offset(type_offset) {}
 
   void force_abbrevs();
 };
 
 unit::~unit() = default;
 
-const dwarf &unit::get_dwarf() const { return m->file; }
+auto unit::get_dwarf() const -> const dwarf & { return m->file; }
 
-section_offset unit::get_section_offset() const { return m->offset; }
+auto unit::get_section_offset() const -> section_offset { return m->offset; }
 
-const die &unit::root() const {
+auto unit::root() const -> const die & {
   if (!m->root.valid()) {
     m->force_abbrevs();
     m->root = die(this);
@@ -175,9 +173,11 @@ const die &unit::root() const {
   return m->root;
 }
 
-const std::shared_ptr<section> &unit::data() const { return m->subsec; }
+auto unit::data() const -> const std::shared_ptr<section> & {
+  return m->subsec;
+}
 
-const abbrev_entry &unit::get_abbrev(abbrev_code acode) const {
+auto unit::get_abbrev(abbrev_code acode) const -> const abbrev_entry & {
   if (!m->have_abbrevs) m->force_abbrevs();
 
   if (!m->abbrevs_vec.empty()) {
@@ -251,7 +251,7 @@ compilation_unit::compilation_unit(const dwarf &file, section_offset offset) {
                         sub.get_section_offset());
 }
 
-const line_table &compilation_unit::get_line_table() const {
+auto compilation_unit::get_line_table() const -> const line_table & {
   if (!m->lt.valid()) {
     const die &d = root();
     if (!d.has(DW_AT::stmt_list) || !d.has(DW_AT::name)) goto done;
@@ -296,9 +296,11 @@ type_unit::type_unit(const dwarf &file, section_offset offset) {
                         sub.get_section_offset(), type_signature, type_offset);
 }
 
-uint64_t type_unit::get_type_signature() const { return m->type_signature; }
+auto type_unit::get_type_signature() const -> uint64_t {
+  return m->type_signature;
+}
 
-const die &type_unit::type() const {
+auto type_unit::type() const -> const die & {
   if (!m->type.valid()) {
     m->force_abbrevs();
     m->type = die(this);

@@ -7,7 +7,7 @@
 
 #include "elf++.hh"
 
-int main(int argc, char **argv) {
+auto main(int argc, char **argv) -> int {
   if (argc != 2) {
     fprintf(stderr, "usage: %s elf-file\n", argv[0]);
     return 2;

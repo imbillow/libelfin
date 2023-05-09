@@ -14,9 +14,9 @@ DWARFPP_BEGIN_NAMESPACE
 
 die::die(const unit *cu) : cu(cu), abbrev(nullptr) {}
 
-const unit &die::get_unit() const { return *cu; }
+auto die::get_unit() const -> const unit & { return *cu; }
 
-section_offset die::get_section_offset() const {
+auto die::get_section_offset() const -> section_offset {
   return cu->get_section_offset() + offset;
 }
 
@@ -46,14 +46,14 @@ void die::read(section_offset off) {
   next = cur.get_section_offset();
 }
 
-bool die::has(DW_AT attr) const {
+auto die::has(DW_AT attr) const -> bool {
   if (!abbrev) return false;
   // XXX Totally lame
   return std::ranges::any_of(abbrev->attributes,
                              [attr](auto &x) { return x.name == attr; });
 }
 
-value die::operator[](DW_AT attr) const {
+auto die::operator[](DW_AT attr) const -> value {
   // XXX We can pre-compute almost all of this work in the
   // abbrev_entry.
   if (abbrev) {
@@ -66,7 +66,7 @@ value die::operator[](DW_AT attr) const {
   throw out_of_range("DIE does not have attribute " + to_string(attr));
 }
 
-value die::resolve(DW_AT attr) const {
+auto die::resolve(DW_AT attr) const -> value {
   // DWARF4 section 2.13, DWARF4 section 3.3.8
 
   // DWARF4 is unclear about what to do when there's both a
@@ -96,7 +96,7 @@ value die::resolve(DW_AT attr) const {
   return {};
 }
 
-die::iterator die::begin() const {
+auto die::begin() const -> die::iterator {
   if (!abbrev || !abbrev->children) return end();
   return {cu, next};
 }
@@ -105,7 +105,7 @@ die::iterator::iterator(const unit *cu, section_offset off) : d(cu) {
   d.read(off);
 }
 
-die::iterator &die::iterator::operator++() {
+auto die::iterator::operator++() -> die::iterator & {
   if (!d.abbrev) return *this;
 
   if (!d.abbrev->children) {
@@ -130,7 +130,7 @@ die::iterator &die::iterator::operator++() {
   return *this;
 }
 
-vector<pair<DW_AT, value>> die::attributes() const {
+auto die::attributes() const -> vector<pair<DW_AT, value>> {
   vector<pair<DW_AT, value>> res;
 
   if (!abbrev) return res;
@@ -147,13 +147,13 @@ vector<pair<DW_AT, value>> die::attributes() const {
   return res;
 }
 
-bool die::operator==(const die &o) const {
+auto die::operator==(const die &o) const -> bool {
   return cu == o.cu && offset == o.offset;
 }
 
-bool die::operator!=(const die &o) const { return !(*this == o); }
+auto die::operator!=(const die &o) const -> bool { return !(*this == o); }
 
-bool die::contains_section_offset(section_offset off) const {
+auto die::contains_section_offset(section_offset off) const -> bool {
   auto contains_off = [off](const die &d) {
     return off >= d.get_section_offset() && off < d.next;
   };
@@ -169,7 +169,7 @@ bool die::contains_section_offset(section_offset off) const {
 
 DWARFPP_END_NAMESPACE
 
-size_t std::hash<dwarf::die>::operator()(const dwarf::die &a) const {
+auto std::hash<dwarf::die>::operator()(const dwarf::die &a) const -> size_t {
   return hash<decltype(a.cu)>()(a.cu) ^
          hash<decltype(a.get_unit_offset())>()(a.get_unit_offset());
 }

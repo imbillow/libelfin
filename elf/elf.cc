@@ -105,26 +105,30 @@ elf::elf(const std::shared_ptr<loader> &l) : m(make_shared<impl>(l)) {
   }
 }
 
-const Ehdr<> &elf::get_hdr() const { return m->hdr; }
+auto elf::get_hdr() const -> const Ehdr<> & { return m->hdr; }
 
-shared_ptr<loader> elf::get_loader() const { return m->l; }
+auto elf::get_loader() const -> shared_ptr<loader> { return m->l; }
 
-const std::vector<section> &elf::sections() const { return m->sections; }
+auto elf::sections() const -> const std::vector<section> & {
+  return m->sections;
+}
 
-const std::vector<segment> &elf::segments() const { return m->segments; }
+auto elf::segments() const -> const std::vector<segment> & {
+  return m->segments;
+}
 
-const section &elf::get_section(const std::string &name) const {
+auto elf::get_section(const std::string &name) const -> const section & {
   for (auto &sec : sections())
     if (name == sec.get_name(nullptr)) return sec;
   return m->invalid_section;
 }
 
-const section &elf::get_section(unsigned index) const {
+auto elf::get_section(unsigned index) const -> const section & {
   if (index >= sections().size()) return m->invalid_section;
   return sections().at(index);
 }
 
-const segment &elf::get_segment(unsigned index) const {
+auto elf::get_segment(unsigned index) const -> const segment & {
   if (index >= segments().size()) return m->invalid_segment;
   return segments().at(index);
 }
@@ -134,33 +138,33 @@ const segment &elf::get_segment(unsigned index) const {
 //
 
 struct segment::impl {
-  explicit impl(elf f) : f(std::move(f)), data(nullptr) {}
+  explicit impl(elf f) : f(std::move(f)) {}
 
   const elf f;
   Phdr<> hdr{};
-  const void *data;
+  const void *data{nullptr};
 };
 
 segment::segment(const elf &f, const void *hdr) : m(make_shared<impl>(f)) {
   canon_hdr(&m->hdr, hdr, f.get_hdr().ei_class, f.get_hdr().ei_data);
 }
 
-const Phdr<> &segment::get_hdr() const { return m->hdr; }
+auto segment::get_hdr() const -> const Phdr<> & { return m->hdr; }
 
-const void *segment::data() const {
+auto segment::data() const -> const void * {
   if (!m->data) m->data = m->f.get_loader()->load(m->hdr.offset, m->hdr.filesz);
   return m->data;
 }
 
-size_t segment::file_size() const { return m->hdr.filesz; }
+auto segment::file_size() const -> size_t { return m->hdr.filesz; }
 
-size_t segment::mem_size() const { return m->hdr.memsz; }
+auto segment::mem_size() const -> size_t { return m->hdr.memsz; }
 
 //////////////////////////////////////////////////////////////////
 // class section
 //
 
-std::string enums::to_string(shn v) {
+auto enums::to_string(shn v) -> std::string {
   if (v == shn::undef) return "undef";
   if (v == shn::abs) return "abs";
   if (v == shn::common) return "common";
@@ -168,22 +172,22 @@ std::string enums::to_string(shn v) {
 }
 
 struct section::impl {
-  explicit impl(elf f) : f(std::move(f)), name(nullptr), data(nullptr) {}
+  explicit impl(elf f) : f(std::move(f)) {}
 
   const elf f;
   Shdr<> hdr{};
-  const char *name;
+  const char *name{nullptr};
   size_t name_len{};
-  const void *data;
+  const void *data{nullptr};
 };
 
 section::section(const elf &f, const void *hdr) : m(make_shared<impl>(f)) {
   canon_hdr(&m->hdr, hdr, f.get_hdr().ei_class, f.get_hdr().ei_data);
 }
 
-const Shdr<> &section::get_hdr() const { return m->hdr; }
+auto section::get_hdr() const -> const Shdr<> & { return m->hdr; }
 
-const char *section::get_name(size_t *len_out) const {
+auto section::get_name(size_t *len_out) const -> const char * {
   // XXX Should the section name strtab be cached?
   if (!m->name)
     m->name = m->f.get_section(m->f.get_hdr().shstrndx)
@@ -193,23 +197,23 @@ const char *section::get_name(size_t *len_out) const {
   return m->name;
 }
 
-string section::get_name() const { return get_name(nullptr); }
+auto section::get_name() const -> string { return get_name(nullptr); }
 
-const void *section::data() const {
+auto section::data() const -> const void * {
   if (m->hdr.type == sht::nobits) return nullptr;
   if (!m->data) m->data = m->f.get_loader()->load(m->hdr.offset, m->hdr.size);
   return m->data;
 }
 
-size_t section::size() const { return m->hdr.size; }
+auto section::size() const -> size_t { return m->hdr.size; }
 
-strtab section::as_strtab() const {
+auto section::as_strtab() const -> strtab {
   if (m->hdr.type != sht::strtab)
     throw section_type_mismatch("cannot use section as strtab");
   return {m->f, data(), size()};
 }
 
-symtab section::as_symtab() const {
+auto section::as_symtab() const -> symtab {
   if (m->hdr.type != sht::symtab && m->hdr.type != sht::dynsym)
     throw section_type_mismatch("cannot use section as symtab");
   return {m->f, data(), size(), m->f.get_section(get_hdr().link).as_strtab()};
@@ -230,7 +234,7 @@ struct strtab::impl {
 strtab::strtab(const elf &f, const void *data, size_t size)
     : m(make_shared<impl>(f, (const char *)data, (const char *)data + size)) {}
 
-const char *strtab::get(Elf64::Off offset, size_t *len_out) const {
+auto strtab::get(Elf64::Off offset, size_t *len_out) const -> const char * {
   const char *start = m->data + offset;
 
   if (start >= m->end)
@@ -246,7 +250,7 @@ const char *strtab::get(Elf64::Off offset, size_t *len_out) const {
   return start;
 }
 
-std::string strtab::get(Elf64::Off offset) const {
+auto strtab::get(Elf64::Off offset) const -> std::string {
   return get(offset, nullptr);
 }
 
@@ -259,11 +263,11 @@ sym::sym(const elf &f, const void *data, strtab strs)
   canon_hdr(&this->data, data, f.get_hdr().ei_class, f.get_hdr().ei_data);
 }
 
-const char *sym::get_name(size_t *len_out) const {
+auto sym::get_name(size_t *len_out) const -> const char * {
   return strs.get(get_data().name, len_out);
 }
 
-std::string sym::get_name() const { return strs.get(get_data().name); }
+auto sym::get_name() const -> std::string { return strs.get(get_data().name); }
 
 //////////////////////////////////////////////////////////////////
 // class symtab
@@ -293,8 +297,10 @@ symtab::iterator::iterator(const symtab &tab, const char *pos)
     stride = sizeof(Sym<Elf64>);
 }
 
-symtab::iterator symtab::begin() const { return iterator(*this, m->data); }
+auto symtab::begin() const -> symtab::iterator {
+  return iterator(*this, m->data);
+}
 
-symtab::iterator symtab::end() const { return iterator(*this, m->end); }
+auto symtab::end() const -> symtab::iterator { return iterator(*this, m->end); }
 
 ELFPP_END_NAMESPACE

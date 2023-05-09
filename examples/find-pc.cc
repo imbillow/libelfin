@@ -14,7 +14,8 @@ void usage(const char *cmd) {
   exit(2);
 }
 
-bool find_pc(const dwarf::die &d, dwarf::taddr pc, vector<dwarf::die> *stack) {
+auto find_pc(const dwarf::die &d, dwarf::taddr pc, vector<dwarf::die> *stack)
+    -> bool {
   using namespace dwarf;
 
   // Scan children first to find most specific DIE
@@ -48,7 +49,7 @@ void dump_die(const dwarf::die &node) {
            to_string(attr.second).c_str());
 }
 
-int main(int argc, char **argv) {
+auto main(int argc, char **argv) -> int {
   if (argc != 3) usage(argv[0]);
 
   dwarf::taddr pc;
