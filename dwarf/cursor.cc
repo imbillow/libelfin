@@ -32,15 +32,15 @@ auto cursor::sleb128() -> int64_t {
 auto cursor::subsection() -> shared_ptr<section> {
   // Section 7.4
   const char *begin = pos;
-  section_length length = fixed<uword>();
+  section_length length = fixed<u32>();
   format fmt;
   if (length < 0xfffffff0) {
     fmt = format::dwarf32;
-    length += sizeof(uword);
+    length += sizeof(u32);
   } else if (length == 0xffffffff) {
     length = fixed<uint64_t>();
     fmt = format::dwarf64;
-    length += sizeof(uword) + sizeof(uint64_t);
+    length += sizeof(u32) + sizeof(uint64_t);
   } else {
     throw format_error("initial length has reserved value");
   }
@@ -51,10 +51,10 @@ auto cursor::subsection() -> shared_ptr<section> {
 void cursor::skip_initial_length() {
   switch (sec->fmt) {
     case format::dwarf32:
-      pos += sizeof(uword);
+      pos += sizeof(u32);
       break;
     case format::dwarf64:
-      pos += sizeof(uword) + sizeof(uint64_t);
+      pos += sizeof(u32) + sizeof(uint64_t);
       break;
     default:
       throw logic_error("cannot skip initial length with unknown format");
@@ -114,15 +114,15 @@ void cursor::skip_form(DW_FORM form) {
 
       // size+data forms
     case DW_FORM::block1:
-      tmp = fixed<ubyte>();
+      tmp = fixed<u8>();
       pos += tmp;
       break;
     case DW_FORM::block2:
-      tmp = fixed<uhalf>();
+      tmp = fixed<u16>();
       pos += tmp;
       break;
     case DW_FORM::block4:
-      tmp = fixed<uword>();
+      tmp = fixed<u32>();
       pos += tmp;
       break;
     case DW_FORM::block:

@@ -30,7 +30,7 @@ auto loclist::evaluate(expr_context *ctx) const -> expr_result {
     }
 
     (void)loc_cur.fixed<uint16_t>();
-    auto expr_op = loc_cur.fixed<ubyte>();
+    auto expr_op = loc_cur.fixed<u8>();
 
     if (expr_op >= (unsigned)DW_OP::reg0 && expr_op < (unsigned)DW_OP::reg31) {
       result.location_type = expr_result::type::address;

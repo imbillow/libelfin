@@ -111,7 +111,7 @@ enum class section_type {
   tu_index
 };
 
-std::string to_string(section_type v);
+auto to_string(section_type v) -> std::string;
 
 /**
  * A DWARF file.  This class is internally reference counted and can
@@ -137,18 +137,18 @@ class dwarf {
   dwarf(dwarf &&) = default;
   ~dwarf();
 
-  dwarf &operator=(const dwarf &o) = default;
-  dwarf &operator=(dwarf &&o) = default;
+  auto operator=(const dwarf &o) -> dwarf & = default;
+  auto operator=(dwarf &&o) -> dwarf & = default;
 
-  bool operator==(const dwarf &o) const { return m == o.m; }
+  auto operator==(const dwarf &o) const -> bool { return m == o.m; }
 
-  bool operator!=(const dwarf &o) const { return m != o.m; }
+  auto operator!=(const dwarf &o) const -> bool { return m != o.m; }
 
   /**
    * Return true if this object represents a DWARF file.
    * Default constructed dwarf objects are not valid.
    */
-  [[nodiscard]] bool valid() const { return !!m; }
+  [[nodiscard]] auto valid() const -> bool { return !!m; }
 
   // XXX This allows the compilation units to be modified and
   // ties us to a vector.  Probably should return an opaque
@@ -156,20 +156,23 @@ class dwarf {
   /**
    * Return the list of compilation units in this DWARF file.
    */
-  [[nodiscard]] const std::vector<compilation_unit> &compilation_units() const;
+  [[nodiscard]] auto compilation_units() const
+      -> const std::vector<compilation_unit> &;
 
   /**
    * Return the type unit with the given signature.  If the
    * signature does not correspond to a type unit, throws
    * out_of_range.
    */
-  [[nodiscard]] const type_unit &get_type_unit(uint64_t type_signature) const;
+  [[nodiscard]] auto get_type_unit(uint64_t type_signature) const
+      -> const type_unit &;
 
   /**
    * \internal Retrieve the specified section from this file.
    * If the section does not exist, throws format_error.
    */
-  [[nodiscard]] std::shared_ptr<section> get_section(section_type type) const;
+  [[nodiscard]] auto get_section(section_type type) const
+      -> std::shared_ptr<section>;
 
  private:
   struct impl;
@@ -191,7 +194,7 @@ class loader {
    * nullptr.  If the section exists but cannot be loaded for
    * any reason, this should throw an exception.
    */
-  virtual const void *load(section_type section, size_t *size_out) = 0;
+  virtual auto load(section_type section, size_t *size_out) -> const void * = 0;
 };
 
 /**
@@ -203,44 +206,45 @@ class unit {
  public:
   virtual ~unit() = 0;
 
-  bool operator==(const unit &o) const { return m == o.m; }
+  auto operator==(const unit &o) const -> bool { return m == o.m; }
 
-  bool operator!=(const unit &o) const { return m != o.m; }
+  auto operator!=(const unit &o) const -> bool { return m != o.m; }
 
   /**
    * Return true if this object is valid.  Default constructed
    * unit objects are not valid.
    */
-  [[nodiscard]] bool valid() const { return !!m; }
+  [[nodiscard]] auto valid() const -> bool { return !!m; }
 
   /**
    * Return the dwarf file this unit is in.
    */
-  [[nodiscard]] const dwarf &get_dwarf() const;
+  [[nodiscard]] auto get_dwarf() const -> const dwarf &;
 
   /**
    * Return the byte offset of this unit's header in its
    * section (.debug_info or .debug_types).
    */
-  [[nodiscard]] section_offset get_section_offset() const;
+  [[nodiscard]] auto get_section_offset() const -> section_offset;
 
   /**
    * Return the root DIE of this unit.  For a compilation unit,
    * this should be a DW_TAG::compilation_unit or
    * DW_TAG::partial_unit.
    */
-  [[nodiscard]] const die &root() const;
+  [[nodiscard]] auto root() const -> const die &;
 
   /**
    * \internal Return the data for this unit.
    */
-  [[nodiscard]] const std::shared_ptr<section> &data() const;
+  [[nodiscard]] auto data() const -> const std::shared_ptr<section> &;
 
   /**
    * \internal Return the abbrev for the specified abbrev
    * code.
    */
-  [[nodiscard]] const abbrev_entry &get_abbrev(std::uint64_t acode) const;
+  [[nodiscard]] auto get_abbrev(std::uint64_t acode) const
+      -> const abbrev_entry &;
 
  protected:
   friend struct ::std::hash<unit>;
@@ -259,8 +263,8 @@ class compilation_unit : public unit {
   compilation_unit(const compilation_unit &o) = default;
   compilation_unit(compilation_unit &&o) = default;
 
-  compilation_unit &operator=(const compilation_unit &o) = default;
-  compilation_unit &operator=(compilation_unit &&o) = default;
+  auto operator=(const compilation_unit &o) -> compilation_unit & = default;
+  auto operator=(compilation_unit &&o) -> compilation_unit & = default;
 
   /**
    * \internal Construct a compilation unit whose header begins
@@ -273,7 +277,7 @@ class compilation_unit : public unit {
    * Returns an invalid line table if this unit has no line
    * table.
    */
-  [[nodiscard]] const line_table &get_line_table() const;
+  [[nodiscard]] auto get_line_table() const -> const line_table &;
 };
 
 /**
@@ -286,8 +290,8 @@ class type_unit : public unit {
   type_unit(const type_unit &o) = default;
   type_unit(type_unit &&o) = default;
 
-  type_unit &operator=(const type_unit &o) = default;
-  type_unit &operator=(type_unit &&o) = default;
+  auto operator=(const type_unit &o) -> type_unit & = default;
+  auto operator=(type_unit &&o) -> type_unit & = default;
 
   /**
    * \internal Construct a type unit whose header begins offset
@@ -300,7 +304,7 @@ class type_unit : public unit {
    * type unit.  This is how DIEs from other units refer to type
    * described by this unit.
    */
-  [[nodiscard]] uint64_t get_type_signature() const;
+  [[nodiscard]] auto get_type_signature() const -> uint64_t;
 
   // XXX Can a type unit contain more than one top-level DIE?
   // The description of type_offset makes it sound like it
@@ -311,7 +315,7 @@ class type_unit : public unit {
    * This may not be the root DIE of this unit if the type is
    * nested in namespaces or other structures.
    */
-  [[nodiscard]] const die &type() const;
+  [[nodiscard]] auto type() const -> const die &;
 };
 
 //////////////////////////////////////////////////////////////////
@@ -336,35 +340,37 @@ class die {
   die(const die &o) = default;
   die(die &&o) = default;
 
-  die &operator=(const die &o) = default;
-  die &operator=(die &&o) = default;
+  auto operator=(const die &o) -> die & = default;
+  auto operator=(die &&o) -> die & = default;
 
   /**
    * Return true if this object represents a DIE in a DWARF
    * file.  Default constructed objects are not valid and some
    * methods return invalid DIEs to indicate failures.
    */
-  [[nodiscard]] bool valid() const { return abbrev != nullptr; }
+  [[nodiscard]] auto valid() const -> bool { return abbrev != nullptr; }
 
   /**
    * Return the unit containing this DIE.
    */
-  [[nodiscard]] const unit &get_unit() const;
+  [[nodiscard]] auto get_unit() const -> const unit &;
 
   /**
    * Return this DIE's byte offset within its compilation unit.
    */
-  [[nodiscard]] section_offset get_unit_offset() const { return offset; }
+  [[nodiscard]] auto get_unit_offset() const -> section_offset {
+    return offset;
+  }
 
   /**
    * Return this DIE's byte offset within its section.
    */
-  [[nodiscard]] section_offset get_section_offset() const;
+  [[nodiscard]] auto get_section_offset() const -> section_offset;
 
   /**
    * Return true if this DIE has the requested attribute.
    */
-  [[nodiscard]] bool has(DW_AT attr) const;
+  [[nodiscard]] auto has(DW_AT attr) const -> bool;
 
   /**
    * Return the value of attr.  Throws out_of_range if this DIE
@@ -372,7 +378,7 @@ class die {
    * better to use the type-safe attribute getters (the global
    * functions beginning with at_*) when possible.
    */
-  value operator[](DW_AT attr) const;
+  auto operator[](DW_AT attr) const -> value;
 
   /**
    * Return the value of attr after resolving specification and
@@ -385,7 +391,7 @@ class die {
    * "abstract origin" and the original DIE will inherit the
    * attributes of its abstract origin (DWARF4 section 3.3.8.2).
    */
-  [[nodiscard]] value resolve(DW_AT attr) const;
+  [[nodiscard]] auto resolve(DW_AT attr) const -> value;
 
   class iterator;
 
@@ -395,22 +401,22 @@ class die {
    * if you need to store a DIE for more than one loop
    * iteration, you must copy it.
    */
-  iterator begin() const;
-  iterator end() const;
+  [[nodiscard]] auto begin() const -> iterator;
+  [[nodiscard]] static auto end() -> iterator;
 
   /**
    * Return a vector of the attributes of this DIE.
    */
-  [[nodiscard]] std::vector<std::pair<DW_AT, value>> attributes() const;
+  [[nodiscard]] auto attributes() const -> std::vector<std::pair<DW_AT, value>>;
 
-  bool operator==(const die &o) const;
-  bool operator!=(const die &o) const;
+  auto operator==(const die &o) const -> bool;
+  auto operator!=(const die &o) const -> bool;
 
   /**
    * Return true if the given section offset is contained within
    * this DIE
    */
-  [[nodiscard]] bool contains_section_offset(section_offset off) const;
+  [[nodiscard]] auto contains_section_offset(section_offset off) const -> bool;
 
  private:
   friend class unit;
@@ -451,15 +457,15 @@ class die::iterator {
   iterator(const iterator &o) = default;
   iterator(iterator &&o) = default;
 
-  iterator &operator=(const iterator &o) = default;
-  iterator &operator=(iterator &&o) = default;
+  auto operator=(const iterator &o) -> iterator & = default;
+  auto operator=(iterator &&o) -> iterator & = default;
 
-  const die &operator*() const { return d; }
+  auto operator*() const -> const die & { return d; }
 
-  const die *operator->() const { return &d; }
+  auto operator->() const -> const die * { return &d; }
 
   // XXX Make this less confusing by implementing operator== instead
-  bool operator!=(const iterator &o) const {
+  auto operator!=(const iterator &o) const -> bool {
     // Quick test of abbrevs.  In particular, this weeds
     // out non-end against end, which is a common
     // comparison while iterating, though it also weeds
@@ -476,7 +482,7 @@ class die::iterator {
     return d.next != o.d.next || d.cu != o.d.cu;
   }
 
-  iterator &operator++();
+  auto operator++() -> iterator &;
 
  private:
   friend class die;
@@ -486,7 +492,7 @@ class die::iterator {
   die d;
 };
 
-inline die::iterator die::end() const { return iterator(); }
+inline die::iterator die::end() { return {}; }
 
 /**
  * An exception indicating that a value is not of the requested type.
@@ -548,27 +554,29 @@ class value {
   value(const value &o) = default;
   value(value &&o) = default;
 
-  value &operator=(const value &o) = default;
-  value &operator=(value &&o) = default;
+  auto operator=(const value &o) -> value & = default;
+  auto operator=(value &&o) -> value & = default;
 
   /**
    * Return true if this object represents a valid value.
    * Default constructed line tables are not valid.
    */
-  [[nodiscard]] bool valid() const { return typ != type::invalid; }
+  [[nodiscard]] auto valid() const -> bool { return typ != type::invalid; }
 
   /**
    * Return this value's byte offset within its compilation
    * unit.
    */
-  [[nodiscard]] section_offset get_unit_offset() const { return offset; }
+  [[nodiscard]] auto get_unit_offset() const -> section_offset {
+    return offset;
+  }
 
   /**
    * Return this value's byte offset within its section.
    */
-  [[nodiscard]] section_offset get_section_offset() const;
+  [[nodiscard]] auto get_section_offset() const -> section_offset;
 
-  [[nodiscard]] type get_type() const { return typ; }
+  [[nodiscard]] auto get_type() const -> type { return typ; }
 
   /**
    * Return this value's attribute encoding.  This automatically
@@ -577,12 +585,12 @@ class value {
    * types is non-trivial and often depends on the attribute
    * (especially prior to DWARF 4).
    */
-  [[nodiscard]] DW_FORM get_form() const { return form; }
+  [[nodiscard]] auto get_form() const -> DW_FORM { return form; }
 
   /**
    * Return this value as a target machine address.
    */
-  [[nodiscard]] taddr as_address() const;
+  [[nodiscard]] auto as_address() const -> taddr;
 
   /**
    * Return this value as a block.  The returned pointer points
@@ -594,21 +602,21 @@ class value {
    * This automatically coerces "exprloc" type values by
    * returning the raw bytes of the encoded expression.
    */
-  const void *as_block(size_t *size_out) const;
+  auto as_block(size_t *size_out) const -> const void *;
 
   /**
    * Return this value as an unsigned constant.  This
    * automatically coerces "constant" type values by
    * interpreting their bytes as unsigned.
    */
-  [[nodiscard]] uint64_t as_uconstant() const;
+  [[nodiscard]] auto as_uconstant() const -> uint64_t;
 
   /**
    * Return this value as a signed constant.  This automatically
    * coerces "constant" type values by interpreting their bytes
    * as twos-complement signed values.
    */
-  [[nodiscard]] int64_t as_sconstant() const;
+  [[nodiscard]] auto as_sconstant() const -> int64_t;
 
   /**
    * Return this value as an expression.  This automatically
@@ -617,33 +625,33 @@ class value {
    * always encoded as blocks, though the library automatically
    * distinguishes these types based on context).
    */
-  [[nodiscard]] expr as_exprloc() const;
+  [[nodiscard]] auto as_exprloc() const -> expr;
 
   /**
    * Return this value as a boolean flag.
    */
-  [[nodiscard]] bool as_flag() const;
+  [[nodiscard]] auto as_flag() const -> bool;
 
   // XXX macptr
 
-  [[nodiscard]] loclist as_loclist() const;
+  [[nodiscard]] auto as_loclist() const -> loclist;
 
   /**
    * Return this value as a rangelist.
    */
-  [[nodiscard]] rangelist as_rangelist() const;
+  [[nodiscard]] auto as_rangelist() const -> rangelist;
 
   /**
    * For a reference type value, return the referenced DIE.
    * This DIE may be in a different compilation unit or could
    * be a DIE in a type unit.
    */
-  [[nodiscard]] die as_reference() const;
+  [[nodiscard]] auto as_reference() const -> die;
 
   /**
    * Return this value as a string.
    */
-  [[nodiscard]] std::string as_string() const;
+  [[nodiscard]] auto as_string() const -> std::string;
 
   /**
    * Fill the given string buffer with the string value of this
@@ -659,13 +667,13 @@ class value {
    * data is in use.  *size_out, if not NULL, is set to the
    * length of the returned string without the NUL-terminator.
    */
-  const char *as_cstr(size_t *size_out = nullptr) const;
+  auto as_cstr(size_t *size_out = nullptr) const -> const char *;
 
   /**
    * Return this value as a section offset.  This is applicable
    * to lineptr, loclistptr, macptr, and rangelistptr.
    */
-  [[nodiscard]] section_offset as_sec_offset() const;
+  [[nodiscard]] auto as_sec_offset() const -> section_offset;
 
  private:
   friend class die;
@@ -681,9 +689,9 @@ class value {
   section_offset offset{};
 };
 
-std::string to_string(value::type v);
+auto to_string(value::type v) -> std::string;
 
-std::string to_string(const value &v);
+auto to_string(const value &v) -> std::string;
 
 //////////////////////////////////////////////////////////////////
 // Expressions and location descriptions
@@ -707,12 +715,12 @@ class expr {
   /**
    * Short-hand for evaluate(ctx, {}).
    */
-  expr_result evaluate(expr_context *ctx) const;
+  auto evaluate(expr_context *ctx) const -> expr_result;
 
   /**
    * Short-hand for evaluate(ctx, {argument}).
    */
-  expr_result evaluate(expr_context *ctx, taddr argument) const;
+  auto evaluate(expr_context *ctx, taddr argument) const -> expr_result;
 
   /**
    * Return the result of evaluating this expression using the
@@ -725,8 +733,9 @@ class expr {
    * expression (such as an unknown operation, stack underflow,
    * bounds error, etc.)
    */
-  expr_result evaluate(expr_context *ctx,
-                       const std::initializer_list<taddr> &arguments) const;
+  auto evaluate(expr_context *ctx,
+                const std::initializer_list<taddr> &arguments) const
+      -> expr_result;
 
  private:
   // XXX This will need more information for some operations
@@ -754,34 +763,36 @@ class expr_context {
    * Return the value stored in register regnum.  This is used
    * to implement DW_OP_breg* operations.
    */
-  virtual taddr reg(unsigned regnum) {
+  virtual auto reg(unsigned regnum) -> taddr {
     throw expr_error("DW_OP_breg* operations not supported");
   }
 
   /**
    * Implement DW_OP_deref_size.
    */
-  virtual taddr deref_size(taddr address, unsigned size) {
+  virtual auto deref_size(taddr address, unsigned size) -> taddr {
     throw expr_error("DW_OP_deref_size operations not supported");
   }
 
   /**
    * Implement DW_OP_xderef_size.
    */
-  virtual taddr xderef_size(taddr address, taddr asid, unsigned size) {
+  virtual auto xderef_size(taddr address, taddr asid, unsigned size) -> taddr {
     throw expr_error("DW_OP_xderef_size operations not supported");
   }
 
   /**
    * Implement DW_OP_form_tls_address.
    */
-  virtual taddr form_tls_address(taddr address) {
+  virtual auto form_tls_address(taddr address) -> taddr {
     throw expr_error("DW_OP_form_tls_address operations not supported");
   }
   /**
    * Implement DW_OP_form_tls_address.
    */
-  virtual taddr pc() { throw expr_error("loclist operations not supported"); }
+  virtual auto pc() -> taddr {
+    throw expr_error("loclist operations not supported");
+  }
 };
 
 /**
@@ -853,7 +864,7 @@ class expr_result {
   // XXX Composite locations
 };
 
-std::string to_string(expr_result::type v);
+auto to_string(expr_result::type v) -> std::string;
 
 class loclist {
  public:
@@ -868,7 +879,7 @@ class loclist {
    * expression (such as an unknown operation, stack underflow,
    * bounds error, etc.)
    */
-  expr_result evaluate(expr_context *ctx) const;
+  auto evaluate(expr_context *ctx) const -> expr_result;
 
  private:
   loclist(const unit *cu, section_offset offset);
@@ -916,11 +927,11 @@ class rangelist {
   /** Move constructor */
   rangelist(rangelist &&o) = default;
 
-  rangelist &operator=(const rangelist &o) = default;
-  rangelist &operator=(rangelist &&o) = default;
+  auto operator=(const rangelist &o) -> rangelist & = default;
+  auto operator=(rangelist &&o) -> rangelist & = default;
 
   class entry;
-  typedef entry value_type;
+  using value_type = entry;
 
   class iterator;
 
@@ -930,18 +941,18 @@ class rangelist {
    * you need to store a range for more than one loop iteration,
    * you must copy it.
    */
-  [[nodiscard]] iterator begin() const;
+  [[nodiscard]] auto begin() const -> iterator;
 
   /**
    * Return an iterator to one past the last entry in this range
    * list.
    */
-  static iterator end();
+  static auto end() -> iterator;
 
   /**
    * Return true if this range list contains the given address.
    */
-  [[nodiscard]] bool contains(taddr addr) const;
+  [[nodiscard]] auto contains(taddr addr) const -> bool;
 
  private:
   std::vector<taddr> synthetic;
@@ -959,7 +970,7 @@ class rangelist::entry {
   /**
    * Return true if addr is within this entry's bounds.
    */
-  [[nodiscard]] bool contains(taddr addr) const {
+  [[nodiscard]] auto contains(taddr addr) const -> bool {
     return low <= addr && addr < high;
   }
 };
@@ -987,32 +998,32 @@ class rangelist::iterator {
   iterator(iterator &&o) = default;
 
   auto operator=(const iterator &o) -> iterator & = default;
-  iterator &operator=(iterator &&o) = default;
+  auto operator=(iterator &&o) -> iterator & = default;
 
   /**
    * Return the current range list entry.  This entry is reused
    * internally, so the caller should copy it if it needs to
    * persist past the next increment.
    */
-  const rangelist::entry &operator*() const { return entry; }
+  auto operator*() const -> const rangelist::entry & { return entry; }
 
   /** Dereference operator */
-  const rangelist::entry *operator->() const { return &entry; }
+  auto operator->() const -> const rangelist::entry * { return &entry; }
 
   /** Equality operator */
-  bool operator==(const iterator &o) const {
+  auto operator==(const iterator &o) const -> bool {
     return sec == o.sec && pos == o.pos;
   }
 
   /** Inequality operator */
-  bool operator!=(const iterator &o) const { return !(*this == o); }
+  auto operator!=(const iterator &o) const -> bool { return !(*this == o); }
 
   /**
    * Increment this iterator to point to the next range list
    * entry.
    */
-  iterator &operator++();
-  const iterator operator++(int) {
+  auto operator++() -> iterator &;
+  auto operator++(int) -> const iterator {
     iterator prev = *this;
     ++*this;
     return prev;
@@ -1063,18 +1074,18 @@ class line_table {
   /** Move constructor */
   line_table(line_table &&o) = default;
 
-  line_table &operator=(const line_table &o) = default;
-  line_table &operator=(line_table &&o) = default;
+  auto operator=(const line_table &o) -> line_table & = default;
+  auto operator=(line_table &&o) -> line_table & = default;
 
   /**
    * Return true if this object represents an initialized line
    * table.  Default constructed line tables are not valid.
    */
-  [[nodiscard]] bool valid() const { return !!m; }
+  [[nodiscard]] auto valid() const -> bool { return !!m; }
 
   class file;
   class entry;
-  typedef entry value_type;
+  using value_type = entry;
 
   class iterator;
 
@@ -1083,13 +1094,13 @@ class line_table {
    * table.  If called on an invalid line table, this will
    * return an iterator equal to end().
    */
-  [[nodiscard]] iterator begin() const;
+  [[nodiscard]] auto begin() const -> iterator;
 
   /**
    * Return an iterator to one past the last entry in this line
    * number table.
    */
-  [[nodiscard]] iterator end() const;
+  [[nodiscard]] auto end() const -> iterator;
 
   /**
    * Return an iterator to the line table entry containing addr
@@ -1097,14 +1108,14 @@ class line_table {
    * equal to addr, but accounting for end_sequence entries).
    * Returns end() if there is no such entry.
    */
-  [[nodiscard]] iterator find_address(taddr addr) const;
+  [[nodiscard]] auto find_address(taddr addr) const -> iterator;
 
   /**
    * Return the index'th file in the line table.  These indexes
    * are typically used by declaration and call coordinates.  If
    * index is out of range, throws out_of_range.
    */
-  [[nodiscard]] const file *get_file(unsigned index) const;
+  [[nodiscard]] auto get_file(unsigned index) const -> const file *;
 
  private:
   friend class iterator;
@@ -1237,7 +1248,7 @@ class line_table::entry {
    * Return a descriptive string of the form
    * "filename[:line[:column]]".
    */
-  [[nodiscard]] std::string get_description() const;
+  [[nodiscard]] auto get_description() const -> std::string;
 };
 
 /**
@@ -1256,35 +1267,35 @@ class line_table::iterator {
   /** Move constructor */
   iterator(iterator &&o) = default;
 
-  iterator &operator=(const iterator &o) = default;
-  iterator &operator=(iterator &&o) = default;
+  auto operator=(const iterator &o) -> iterator & = default;
+  auto operator=(iterator &&o) -> iterator & = default;
 
   /**
    * Return the current line table entry.  This entry is reused
    * internally, so the caller should copy it if it needs to
    * persist past the next increment.
    */
-  const line_table::entry &operator*() const { return entry; }
+  auto operator*() const -> const line_table::entry & { return entry; }
 
   /** Dereference operator */
-  const line_table::entry *operator->() const { return &entry; }
+  auto operator->() const -> const line_table::entry * { return &entry; }
 
   /** Equality operator */
-  bool operator==(const iterator &o) const {
+  auto operator==(const iterator &o) const -> bool {
     return o.pos == pos && o.table == table;
   }
 
   /** Inequality operator */
-  bool operator!=(const iterator &o) const { return !(*this == o); }
+  auto operator!=(const iterator &o) const -> bool { return !(*this == o); }
 
   /**
    * Increment this iterator to point to the next line table
    * entry.
    */
-  iterator &operator++();
+  auto operator++() -> iterator &;
 
   /** Post-increment operator */
-  const iterator operator++(int) {
+  auto operator++(int) -> const iterator {
     iterator tmp(*this);
     ++(*this);
     return tmp;
@@ -1299,7 +1310,7 @@ class line_table::iterator {
    * Process the next opcode.  If the opcode "adds a row to the
    * table", update entry to reflect the row and return true.
    */
-  bool step(cursor *cur);
+  auto step(cursor *cur) -> bool;
 };
 
 //////////////////////////////////////////////////////////////////
@@ -1308,78 +1319,78 @@ class line_table::iterator {
 
 // XXX More
 
-die at_abstract_origin(const die &d);
-DW_ACCESS at_accessibility(const die &d);
-uint64_t at_allocated(const die &d, expr_context *ctx);
-bool at_artificial(const die &d);
-uint64_t at_associated(const die &d, expr_context *ctx);
-uint64_t at_bit_offset(const die &d, expr_context *ctx);
-uint64_t at_bit_size(const die &d, expr_context *ctx);
-uint64_t at_bit_stride(const die &d, expr_context *ctx);
-uint64_t at_byte_size(const die &d, expr_context *ctx);
-uint64_t at_byte_stride(const die &d, expr_context *ctx);
-DW_CC at_calling_convention(const die &d);
-die at_common_reference(const die &d);
-std::string at_comp_dir(const die &d);
-value at_const_value(const die &d);
-bool at_const_expr(const die &d);
-die at_containing_type(const die &d);
-uint64_t at_count(const die &d, expr_context *ctx);
-expr_result at_data_member_location(const die &d, expr_context *ctx, taddr base,
-                                    taddr pc);
-bool at_declaration(const die &d);
-std::string at_description(const die &d);
-die at_discr(const die &d);
-value at_discr_value(const die &d);
-bool at_elemental(const die &d);
-DW_ATE at_encoding(const die &d);
-DW_END at_endianity(const die &d);
-taddr at_entry_pc(const die &d);
-bool at_enum_class(const die &d);
-bool at_explicit(const die &d);
-die at_extension(const die &d);
-bool at_external(const die &d);
-die at_friend(const die &d);
-taddr at_high_pc(const die &d);
-DW_ID at_identifier_case(const die &d);
-die at_import(const die &d);
-DW_INL at_inline(const die &d);
-bool at_is_optional(const die &d);
-DW_LANG at_language(const die &d);
-std::string at_linkage_name(const die &d);
-taddr at_low_pc(const die &d);
-uint64_t at_lower_bound(const die &d, expr_context *ctx);
-bool at_main_subprogram(const die &d);
-bool at_mutable(const die &d);
-std::string at_name(const die &d);
-die at_namelist_item(const die &d);
-die at_object_pointer(const die &d);
-DW_ORD at_ordering(const die &d);
-std::string at_picture_string(const die &d);
-die at_priority(const die &d);
-std::string at_producer(const die &d);
-bool at_prototyped(const die &d);
-bool at_pure(const die &d);
-rangelist at_ranges(const die &d);
-bool at_recursive(const die &d);
-die at_sibling(const die &d);
-die at_signature(const die &d);
-die at_small(const die &d);
-die at_specification(const die &d);
-bool at_threads_scaled(const die &d);
-die at_type(const die &d);
-uint64_t at_upper_bound(const die &d, expr_context *ctx);
-bool at_use_UTF8(const die &d);
-bool at_variable_parameter(const die &d);
-DW_VIRTUALITY at_virtuality(const die &d);
-DW_VIS at_visibility(const die &d);
+auto at_abstract_origin(const die &d) -> die;
+auto at_accessibility(const die &d) -> DW_ACCESS;
+auto at_allocated(const die &d, expr_context *ctx) -> uint64_t;
+auto at_artificial(const die &d) -> bool;
+auto at_associated(const die &d, expr_context *ctx) -> uint64_t;
+auto at_bit_offset(const die &d, expr_context *ctx) -> uint64_t;
+auto at_bit_size(const die &d, expr_context *ctx) -> uint64_t;
+auto at_bit_stride(const die &d, expr_context *ctx) -> uint64_t;
+auto at_byte_size(const die &d, expr_context *ctx) -> uint64_t;
+auto at_byte_stride(const die &d, expr_context *ctx) -> uint64_t;
+auto at_calling_convention(const die &d) -> DW_CC;
+auto at_common_reference(const die &d) -> die;
+auto at_comp_dir(const die &d) -> std::string;
+auto at_const_value(const die &d) -> value;
+auto at_const_expr(const die &d) -> bool;
+auto at_containing_type(const die &d) -> die;
+auto at_count(const die &d, expr_context *ctx) -> uint64_t;
+auto at_data_member_location(const die &d, expr_context *ctx, taddr base,
+                             taddr pc) -> expr_result;
+auto at_declaration(const die &d) -> bool;
+auto at_description(const die &d) -> std::string;
+auto at_discr(const die &d) -> die;
+auto at_discr_value(const die &d) -> value;
+auto at_elemental(const die &d) -> bool;
+auto at_encoding(const die &d) -> DW_ATE;
+auto at_endianity(const die &d) -> DW_END;
+auto at_entry_pc(const die &d) -> taddr;
+auto at_enum_class(const die &d) -> bool;
+auto at_explicit(const die &d) -> bool;
+auto at_extension(const die &d) -> die;
+auto at_external(const die &d) -> bool;
+auto at_friend(const die &d) -> die;
+auto at_high_pc(const die &d) -> taddr;
+auto at_identifier_case(const die &d) -> DW_ID;
+auto at_import(const die &d) -> die;
+auto at_inline(const die &d) -> DW_INL;
+auto at_is_optional(const die &d) -> bool;
+auto at_language(const die &d) -> DW_LANG;
+auto at_linkage_name(const die &d) -> std::string;
+auto at_low_pc(const die &d) -> taddr;
+auto at_lower_bound(const die &d, expr_context *ctx) -> uint64_t;
+auto at_main_subprogram(const die &d) -> bool;
+auto at_mutable(const die &d) -> bool;
+auto at_name(const die &d) -> std::string;
+auto at_namelist_item(const die &d) -> die;
+auto at_object_pointer(const die &d) -> die;
+auto at_ordering(const die &d) -> DW_ORD;
+auto at_picture_string(const die &d) -> std::string;
+auto at_priority(const die &d) -> die;
+auto at_producer(const die &d) -> std::string;
+auto at_prototyped(const die &d) -> bool;
+auto at_pure(const die &d) -> bool;
+auto at_ranges(const die &d) -> rangelist;
+auto at_recursive(const die &d) -> bool;
+auto at_sibling(const die &d) -> die;
+auto at_signature(const die &d) -> die;
+auto at_small(const die &d) -> die;
+auto at_specification(const die &d) -> die;
+auto at_threads_scaled(const die &d) -> bool;
+auto at_type(const die &d) -> die;
+auto at_upper_bound(const die &d, expr_context *ctx) -> uint64_t;
+auto at_use_UTF8(const die &d) -> bool;
+auto at_variable_parameter(const die &d) -> bool;
+auto at_virtuality(const die &d) -> DW_VIRTUALITY;
+auto at_visibility(const die &d) -> DW_VIS;
 
 /**
  * Return the PC range spanned by the code of a DIE.  The DIE must
  * either have DW_AT::ranges or DW_AT::low_pc.  It may optionally have
  * DW_AT::high_pc.
  */
-rangelist die_pc_range(const die &d);
+auto die_pc_range(const die &d) -> rangelist;
 
 //////////////////////////////////////////////////////////////////
 // Utilities
@@ -1402,8 +1413,8 @@ class die_str_map {
   die_str_map(const die_str_map &o) = default;
   die_str_map(die_str_map &&o) = default;
 
-  die_str_map &operator=(const die_str_map &o) = default;
-  die_str_map &operator=(die_str_map &&o) = default;
+  auto operator=(const die_str_map &o) -> die_str_map & = default;
+  auto operator=(die_str_map &&o) -> die_str_map & = default;
 
   /**
    * Construct a string map for the type names of parent's
@@ -1412,18 +1423,18 @@ class die_str_map {
    * XXX This should use .debug_pubtypes if parent is a compile
    * unit's root DIE, but it currently does not.
    */
-  static die_str_map from_type_names(const die &parent);
+  static auto from_type_names(const die &parent) -> die_str_map;
 
   /**
    * Return the DIE whose attribute matches val.  If no such DIE
    * exists, return an invalid die object.
    */
-  const die &operator[](const char *val) const;
+  auto operator[](const char *val) const -> const die &;
 
   /**
    * Short-hand for [value.c_str()].
    */
-  const die &operator[](const std::string &val) const {
+  auto operator[](const std::string &val) const -> const die & {
     return (*this)[val.c_str()];
   }
 
@@ -1442,12 +1453,12 @@ namespace elf {
  * If the section is a valid DWARF section name, sets *out to
  * the type and returns true.  If not, returns false.
  */
-bool section_name_to_type(const char *name, section_type *out);
+auto section_name_to_type(const char *name, section_type *out) -> bool;
 
 /**
  * Translate a DWARF section type into an ELF section name.
  */
-const char *section_type_to_name(section_type type);
+auto section_type_to_name(section_type type) -> const char *;
 
 template <typename Elf>
 class elf_loader : public loader {
@@ -1456,7 +1467,7 @@ class elf_loader : public loader {
  public:
   explicit elf_loader(const Elf &file) : f(file) {}
 
-  const void *load(section_type section, size_t *size_out) override {
+  auto load(section_type section, size_t *size_out) -> const void * override {
     auto sec = f.get_section(section_type_to_name(section));
     if (!sec.valid()) return nullptr;
     *size_out = sec.size();
@@ -1471,7 +1482,7 @@ class elf_loader : public loader {
  * reasonably be used with elf::elf from libelf++.
  */
 template <typename Elf>
-std::shared_ptr<elf_loader<Elf>> create_loader(const Elf &f) {
+auto create_loader(const Elf &f) -> std::shared_ptr<elf_loader<Elf>> {
   return std::make_shared<elf_loader<Elf>>(f);
 }
 };  // namespace elf
@@ -1485,18 +1496,18 @@ DWARFPP_END_NAMESPACE
 namespace std {
 template <>
 struct hash<dwarf::unit> {
-  typedef size_t result_type;
-  typedef const dwarf::unit &argument_type;
-  result_type operator()(argument_type a) const {
+  using result_type = size_t;
+  using argument_type = const dwarf::unit &;
+  auto operator()(argument_type a) const -> result_type {
     return hash<decltype(a.m)>()(a.m);
   }
 };
 
 template <>
 struct hash<dwarf::die> {
-  typedef size_t result_type;
-  typedef const dwarf::die &argument_type;
-  result_type operator()(argument_type a) const;
+  using result_type = size_t;
+  using argument_type = const dwarf::die &;
+  auto operator()(argument_type a) const -> result_type;
 };
 }  // namespace std
 

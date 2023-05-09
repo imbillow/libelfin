@@ -19,13 +19,13 @@ enum class elfclass : unsigned char {
   _64 = 2,  // 64-bit objects
 };
 
-std::string to_string(elfclass v);
+auto to_string(elfclass v) -> std::string;
 
 // Common basic data types
 struct ElfTypes {
-  typedef std::uint16_t Half;
-  typedef std::uint32_t Word;
-  typedef std::int32_t Sword;
+  using Half = std::uint16_t;
+  using Word = std::uint32_t;
+  using Sword = std::int32_t;
 };
 
 struct Elf32 : public ElfTypes {
@@ -33,15 +33,15 @@ struct Elf32 : public ElfTypes {
   static const elfclass cls = elfclass::_32;
 
   // Basic data types (ELF32 figure 1-2)
-  typedef std::uint32_t Addr;
-  typedef std::uint32_t Off;
+  using Addr = std::uint32_t;
+  using Off = std::uint32_t;
 
   // Predicated types
-  typedef Word Word32_Xword64;
+  using Word32_Xword64 = Word;
 
   template <typename t32, typename t64>
   struct pick {
-    typedef t32 t;
+    using t = t32;
   };
 };
 
@@ -50,17 +50,17 @@ struct Elf64 : ElfTypes {
   static const elfclass cls = elfclass::_64;
 
   // Basic data types (ELF64 table 1)
-  typedef std::uint64_t Addr;
-  typedef std::uint64_t Off;
-  typedef std::uint64_t Xword;
-  typedef std::int64_t Sxword;
+  using Addr = std::uint64_t;
+  using Off = std::uint64_t;
+  using Xword = std::uint64_t;
+  using Sxword = std::int64_t;
 
   // Predicated types
-  typedef Xword Word32_Xword64;
+  using Word32_Xword64 = Xword;
 
   template <typename t32, typename t64>
   struct pick {
-    typedef t64 t;
+    using t = t64;
   };
 };
 
@@ -70,7 +70,7 @@ enum class elfdata : unsigned char {
   msb = 2,
 };
 
-std::string to_string(elfdata v);
+auto to_string(elfdata v) -> std::string;
 
 // Operating system and ABI identifiers (ELF64 table 5)
 enum class elfosabi : unsigned char {
@@ -79,7 +79,7 @@ enum class elfosabi : unsigned char {
   standalone = 255,
 };
 
-std::string to_string(elfosabi v);
+auto to_string(elfosabi v) -> std::string;
 
 // Object file types (ELF64 table 6)
 enum class et : ElfTypes::Half {
@@ -94,12 +94,12 @@ enum class et : ElfTypes::Half {
   hiproc = 0xffff,
 };
 
-std::string to_string(et v);
+auto to_string(et v) -> std::string;
 
 // ELF header (ELF32 figure 1-3, ELF64 figure 2)
 template <typename E = Elf64, byte_order Order = byte_order::native>
 struct Ehdr {
-  typedef E types;
+  using types = E;
   static const byte_order order = Order;
 
   // ELF identification
@@ -170,7 +170,7 @@ enum shn : ElfTypes::Half  // This is a Word in Shdr and Half in Sym.
   common = 0xfff2,  // Symbol declared as a common block
 };
 
-std::string to_string(shn v);
+auto to_string(shn v) -> std::string;
 }  // namespace enums
 
 using enums::shn;
@@ -196,7 +196,7 @@ enum class sht : ElfTypes::Word {
   hiproc = 0x7FFFFFFF,
 };
 
-std::string to_string(sht v);
+auto to_string(sht v) -> std::string;
 
 // Section attributes (ELF64 table 9).  Note: This is an Elf32_Word in
 // ELF32.  We use the larger ELF64 type for the canonical
@@ -210,35 +210,35 @@ enum class shf : Elf64::Xword {
   maskproc = 0xF0000000,  // Processor-specific use
 };
 
-std::string to_string(shf v);
+auto to_string(shf v) -> std::string;
 
-static inline constexpr shf operator&(shf a, shf b) {
+static inline constexpr auto operator&(shf a, shf b) -> shf {
   return (shf)((std::uint64_t)a & (std::uint64_t)b);
 }
 
-static inline constexpr shf operator|(shf a, shf b) {
+static inline constexpr auto operator|(shf a, shf b) -> shf {
   return (shf)((std::uint64_t)a | (std::uint64_t)b);
 }
 
-static inline constexpr shf operator^(shf a, shf b) {
+static inline constexpr auto operator^(shf a, shf b) -> shf {
   return (shf)((std::uint64_t)a ^ (std::uint64_t)b);
 }
 
-static inline constexpr shf operator~(shf a) {
+static inline constexpr auto operator~(shf a) -> shf {
   return (shf) ~((std::uint64_t)a);
 }
 
-static inline shf &operator&=(shf &a, shf b) {
+static inline auto operator&=(shf &a, shf b) -> shf & {
   a = a & b;
   return a;
 }
 
-static inline shf &operator|=(shf &a, shf b) {
+static inline auto operator|=(shf &a, shf b) -> shf & {
   a = a | b;
   return a;
 }
 
-static inline shf &operator^=(shf &a, shf b) {
+static inline auto operator^=(shf &a, shf b) -> shf & {
   a = a ^ b;
   return a;
 }
@@ -246,14 +246,14 @@ static inline shf &operator^=(shf &a, shf b) {
 // Section header (ELF32 figure 1-8, ELF64 figure 3)
 template <typename E = Elf64, byte_order Order = byte_order::native>
 struct Shdr {
-  typedef E types;
+  using types = E;
   static const byte_order order = Order;
   // Section numbers are half-words in some structures and full
   // words in others. Here we declare a local shn type that is
   // elf::shn for the native byte order, but the full word for
   // specific encoding byte orders.
-  typedef typename internal::OrderPick<Order, elf::shn, typename E::Word,
-                                       typename E::Word>::T shn;
+  using shn = typename internal::OrderPick<Order, elf::shn, typename E::Word,
+                                           typename E::Word>::T;
 
   typename E::Word name;  // Section name
   sht type;               // Section type
@@ -297,7 +297,7 @@ enum class pt : ElfTypes::Word {
   hiproc = 0x7FFFFFFF,
 };
 
-std::string to_string(pt v);
+auto to_string(pt v) -> std::string;
 
 // Segment attributes
 enum class pf : ElfTypes::Word {
@@ -308,33 +308,35 @@ enum class pf : ElfTypes::Word {
   maskproc = 0xFF000000,  // Processor-specific use
 };
 
-std::string to_string(pf v);
+auto to_string(pf v) -> std::string;
 
-static inline constexpr pf operator&(pf a, pf b) {
+static inline constexpr auto operator&(pf a, pf b) -> pf {
   return (pf)((std::uint64_t)a & (std::uint64_t)b);
 }
 
-static inline constexpr pf operator|(pf a, pf b) {
+static inline constexpr auto operator|(pf a, pf b) -> pf {
   return (pf)((std::uint64_t)a | (std::uint64_t)b);
 }
 
-static inline constexpr pf operator^(pf a, pf b) {
+static inline constexpr auto operator^(pf a, pf b) -> pf {
   return (pf)((std::uint64_t)a ^ (std::uint64_t)b);
 }
 
-static inline constexpr pf operator~(pf a) { return (pf) ~((std::uint64_t)a); }
+static inline constexpr auto operator~(pf a) -> pf {
+  return (pf) ~((std::uint64_t)a);
+}
 
-static inline pf &operator&=(pf &a, pf b) {
+static inline auto operator&=(pf &a, pf b) -> pf & {
   a = a & b;
   return a;
 }
 
-static inline pf &operator|=(pf &a, pf b) {
+static inline auto operator|=(pf &a, pf b) -> pf & {
   a = a | b;
   return a;
 }
 
-static inline pf &operator^=(pf &a, pf b) {
+static inline auto operator^=(pf &a, pf b) -> pf & {
   a = a ^ b;
   return a;
 }
@@ -345,7 +347,7 @@ struct Phdr;
 
 template <byte_order Order>
 struct Phdr<Elf32, Order> {
-  typedef Elf32 types;
+  using types = Elf32;
   static const byte_order order = Order;
 
   pt type;             // Type of segment
@@ -372,7 +374,7 @@ struct Phdr<Elf32, Order> {
 
 template <byte_order Order>
 struct Phdr<Elf64, Order> {
-  typedef Elf64 types;
+  using types = Elf64;
   static const byte_order order = Order;
 
   pt type;              // Type of segment
@@ -409,7 +411,7 @@ enum class stb : unsigned char {
   hiproc = 15,
 };
 
-std::string to_string(stb v);
+auto to_string(stb v) -> std::string;
 
 // Symbol types (ELF32 figure 1-17, ELF64 table 15)
 enum class stt : unsigned char {
@@ -425,7 +427,7 @@ enum class stt : unsigned char {
   hiproc = 15,
 };
 
-std::string to_string(stt v);
+auto to_string(stt v) -> std::string;
 
 // Symbol table (ELF32 figure 1-15, ELF64 figure 4)
 template <typename E = Elf64, byte_order Order = byte_order::native>
@@ -433,7 +435,7 @@ struct Sym;
 
 template <byte_order Order>
 struct Sym<Elf32, Order> {
-  typedef Elf32 types;
+  using types = Elf32;
   static const byte_order order = Order;
 
   Elf32::Word name;     // Symbol name (strtab offset)
@@ -453,18 +455,18 @@ struct Sym<Elf32, Order> {
     shnxd = swizzle(o.shnxd, o.order, order);
   }
 
-  [[nodiscard]] stb binding() const { return (stb)(info >> 4); }
+  [[nodiscard]] auto binding() const -> stb { return (stb)(info >> 4); }
 
   void set_binding(stb v) { info = (info & 0x0F) | ((unsigned char)v << 4); }
 
-  [[nodiscard]] stt type() const { return (stt)(info & 0xF); }
+  [[nodiscard]] auto type() const -> stt { return (stt)(info & 0xF); }
 
   void set_type(stt v) { info = (info & 0xF0) | (unsigned char)v; }
 };
 
 template <byte_order Order>
 struct Sym<Elf64, Order> {
-  typedef Elf64 types;
+  using types = Elf64;
   static const byte_order order = Order;
 
   Elf64::Word name;     // Symbol name (strtab offset)
@@ -484,11 +486,11 @@ struct Sym<Elf64, Order> {
     shnxd = swizzle(o.shnxd, o.order, order);
   }
 
-  [[nodiscard]] stb binding() const { return (stb)(info >> 4); }
+  [[nodiscard]] auto binding() const -> stb { return (stb)(info >> 4); }
 
   void set_binding(stb v) { info = (info & 0xF) | ((unsigned char)v << 4); }
 
-  [[nodiscard]] stt type() const { return (stt)(info & 0xF); }
+  [[nodiscard]] auto type() const -> stt { return (stt)(info & 0xF); }
 
   void set_type(stt v) { info = (info & 0xF0) | (unsigned char)v; }
 };

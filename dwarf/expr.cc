@@ -84,7 +84,7 @@ auto expr::evaluate(expr_context *ctx,
     // even though we have a default case.
 #pragma GCC diagnostic push
 #pragma GCC diagnostic warning "-Wswitch-enum"
-    auto op = (DW_OP)cur.fixed<ubyte>();
+    auto op = (DW_OP)cur.fixed<u8>();
     switch (op) {
         // 2.5.1.1 Literal encodings
       case DW_OP::lit0... DW_OP::lit31:

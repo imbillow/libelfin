@@ -65,48 +65,49 @@ class elf {
   elf(const elf &o) = default;
   elf(elf &&o) = default;
 
-  elf &operator=(const elf &o) = default;
+  auto operator=(const elf &o) -> elf & = default;
 
-  [[nodiscard]] bool valid() const { return !!m; }
+  [[nodiscard]] auto valid() const -> bool { return !!m; }
 
   /**
    * Return the ELF file header in canonical form (ELF64 in
    * native byte order).
    */
-  [[nodiscard]] const Ehdr<> &get_hdr() const;
+  [[nodiscard]] auto get_hdr() const -> const Ehdr<> &;
 
   /**
    * Return the loader used by this file.
    */
-  [[nodiscard]] std::shared_ptr<loader> get_loader() const;
+  [[nodiscard]] auto get_loader() const -> std::shared_ptr<loader>;
 
   /**
    * Return the segments in this file.
    */
-  [[nodiscard]] const std::vector<segment> &segments() const;
+  [[nodiscard]] auto segments() const -> const std::vector<segment> &;
 
   /**
    * Return the segment at the given index. If no such segment
    * is found, return an invalid segment.
    */
-  [[nodiscard]] const segment &get_segment(unsigned index) const;
+  [[nodiscard]] auto get_segment(unsigned index) const -> const segment &;
 
   /**
    * Return the sections in this file.
    */
-  [[nodiscard]] const std::vector<section> &sections() const;
+  [[nodiscard]] auto sections() const -> const std::vector<section> &;
 
   /**
    * Return the section with the specified name. If no such
    * section is found, return an invalid section.
    */
-  [[nodiscard]] const section &get_section(const std::string &name) const;
+  [[nodiscard]] auto get_section(const std::string &name) const
+      -> const section &;
 
   /**
    * Return the section at the given index.  If no such section
    * is found, return an invalid section.
    */
-  [[nodiscard]] const section &get_section(unsigned index) const;
+  [[nodiscard]] auto get_section(unsigned index) const -> const section &;
 
  private:
   struct impl;
@@ -127,7 +128,7 @@ class loader {
    * loader cannot satisfy the full request for any reason
    * (including a premature EOF), it must throw an exception.
    */
-  virtual const void *load(off_t offset, size_t size) = 0;
+  virtual auto load(off_t offset, size_t size) -> const void * = 0;
 };
 
 /**
@@ -135,7 +136,7 @@ class loader {
  * will close fd when done, so the caller should dup the file
  * descriptor if it intends to continue using it.
  */
-std::shared_ptr<loader> create_mmap_loader(int fd);
+auto create_mmap_loader(int fd) -> std::shared_ptr<loader>;
 
 /**
  * An exception indicating that a section is not of the requested type.
@@ -171,30 +172,30 @@ class segment {
    * Return true if this segment is valid and corresponds to a
    * segment in the ELF file.
    */
-  [[nodiscard]] bool valid() const { return !!m; }
+  [[nodiscard]] auto valid() const -> bool { return !!m; }
 
   /**
    * Return the ELF section header in canonical form (ELF64 in
    * native byte order).
    */
-  [[nodiscard]] const Phdr<> &get_hdr() const;
+  [[nodiscard]] auto get_hdr() const -> const Phdr<> &;
 
   /**
    * Return this segment's data. The returned buffer will
    * be file_size() bytes long.
    */
-  [[nodiscard]] const void *data() const;
+  [[nodiscard]] auto data() const -> const void *;
 
   /**
    * Return the on disk size of this segment in bytes.
    */
-  [[nodiscard]] size_t file_size() const;
+  [[nodiscard]] auto file_size() const -> size_t;
 
   /**
    * Return the in-memory size of this segment in bytes.
    * Bytes between file_size() and mem_size() are implicitly zeroes.
    */
-  [[nodiscard]] size_t mem_size() const;
+  [[nodiscard]] auto mem_size() const -> size_t;
 
  private:
   struct impl;
@@ -224,47 +225,47 @@ class section {
    * Return true if this section is valid and corresponds to a
    * section in the ELF file.
    */
-  [[nodiscard]] bool valid() const { return !!m; }
+  [[nodiscard]] auto valid() const -> bool { return !!m; }
 
   /**
    * Return the ELF section header in canonical form (ELF64 in
    * native byte order).
    */
-  [[nodiscard]] const Shdr<> &get_hdr() const;
+  [[nodiscard]] auto get_hdr() const -> const Shdr<> &;
 
   /**
    * Return this section's name.
    */
-  const char *get_name(size_t *len_out) const;
+  auto get_name(size_t *len_out) const -> const char *;
   /**
    * Return this section's name.  The returned string copies its
    * data, so loader liveness requirements don't apply.
    */
-  [[nodiscard]] std::string get_name() const;
+  [[nodiscard]] auto get_name() const -> std::string;
 
   /**
    * Return this section's data.  If this is a NOBITS section,
    * return nullptr.
    */
-  [[nodiscard]] const void *data() const;
+  [[nodiscard]] auto data() const -> const void *;
   /**
    * Return the size of this section in bytes.
    */
-  [[nodiscard]] size_t size() const;
+  [[nodiscard]] auto size() const -> size_t;
 
   /**
    * Return this section as a strtab.  Throws
    * section_type_mismatch if this section is not a string
    * table.
    */
-  [[nodiscard]] strtab as_strtab() const;
+  [[nodiscard]] auto as_strtab() const -> strtab;
 
   /**
    * Return this section as a symtab.  Throws
    * section_type_mismatch if this section is not a symbol
    * table.
    */
-  [[nodiscard]] symtab as_symtab() const;
+  [[nodiscard]] auto as_symtab() const -> symtab;
 
  private:
   struct impl;
@@ -287,7 +288,7 @@ class strtab {
   strtab() = default;
   strtab(const elf &f, const void *data, size_t size);
 
-  [[nodiscard]] bool valid() const { return !!m; }
+  [[nodiscard]] auto valid() const -> bool { return !!m; }
 
   /**
    * Return the string at the given offset in this string table.
@@ -296,11 +297,11 @@ class strtab {
    * directly into the loaded section, though this still
    * verifies that the returned string is NUL-terminated.
    */
-  const char *get(Elf64::Off offset, size_t *len_out) const;
+  auto get(Elf64::Off offset, size_t *len_out) const -> const char *;
   /**
    * Return the string at the given offset in this string table.
    */
-  [[nodiscard]] std::string get(Elf64::Off offset) const;
+  [[nodiscard]] auto get(Elf64::Off offset) const -> std::string;
 
  private:
   struct impl;
@@ -320,7 +321,7 @@ class sym {
   /**
    * Return this symbol's raw data.
    */
-  [[nodiscard]] const Sym<> &get_data() const { return data; }
+  [[nodiscard]] auto get_data() const -> const Sym<> & { return data; }
 
   /**
    * Return this symbol's name.
@@ -329,12 +330,12 @@ class sym {
    * is very efficient.  If len_out is non-nullptr, *len_out
    * will be set the length of the returned string.
    */
-  const char *get_name(size_t *len_out) const;
+  auto get_name(size_t *len_out) const -> const char *;
 
   /**
    * Return this symbol's name as a string.
    */
-  [[nodiscard]] std::string get_name() const;
+  [[nodiscard]] auto get_name() const -> std::string;
 };
 
 /**
@@ -353,7 +354,7 @@ class symtab {
   symtab() = default;
   symtab(const elf &f, const void *data, size_t size, const strtab &strs);
 
-  [[nodiscard]] bool valid() const { return !!m; }
+  [[nodiscard]] auto valid() const -> bool { return !!m; }
 
   class iterator {
     const elf f;
@@ -365,40 +366,40 @@ class symtab {
     friend class symtab;
 
    public:
-    sym operator*() const { return sym(f, pos, strs); }
+    auto operator*() const -> sym { return sym(f, pos, strs); }
 
-    iterator &operator++() { return *this += 1; }
+    auto operator++() -> iterator & { return *this += 1; }
 
-    const iterator operator++(int) {
+    auto operator++(int) -> const iterator {
       iterator cur(*this);
       *this += 1;
       return cur;
     }
 
-    iterator &operator+=(std::ptrdiff_t x) {
+    auto operator+=(std::ptrdiff_t x) -> iterator & {
       pos += x * stride;
       return *this;
     }
 
-    iterator &operator-=(std::ptrdiff_t x) {
+    auto operator-=(std::ptrdiff_t x) -> iterator & {
       pos -= x * stride;
       return *this;
     }
 
-    bool operator==(iterator &o) const { return pos == o.pos; }
+    auto operator==(iterator &o) const -> bool { return pos == o.pos; }
 
-    bool operator!=(iterator &o) const { return pos != o.pos; }
+    auto operator!=(iterator &o) const -> bool { return pos != o.pos; }
   };
 
   /**
    * Return an iterator to the first symbol.
    */
-  [[nodiscard]] iterator begin() const;
+  [[nodiscard]] auto begin() const -> iterator;
 
   /**
    * Return an iterator just past the last symbol.
    */
-  [[nodiscard]] iterator end() const;
+  [[nodiscard]] auto end() const -> iterator;
 
  private:
   struct impl;

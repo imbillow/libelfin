@@ -26,13 +26,13 @@ struct line_table::impl {
 
   // Header information
   section_offset program_offset{};
-  ubyte minimum_instruction_length{};
-  ubyte maximum_operations_per_instruction{};
+  u8 minimum_instruction_length{};
+  u8 maximum_operations_per_instruction{};
   bool default_is_stmt{};
-  sbyte line_base{};
-  ubyte line_range{};
-  ubyte opcode_base{};
-  vector<ubyte> standard_opcode_lengths;
+  s8 line_base{};
+  u8 line_range{};
+  u8 opcode_base{};
+  vector<u8> standard_opcode_lengths;
   vector<string> include_directories;
   vector<file> file_names;
 
@@ -73,25 +73,25 @@ line_table::line_table(const shared_ptr<section> &sec, section_offset offset,
   m->sec->addr_size = cu_addr_size;
 
   // Basic header information
-  auto version = cur.fixed<uhalf>();
+  auto version = cur.fixed<u16>();
   if (version < 2 || version > 4)
     throw format_error("unknown line number table version " +
                        std::to_string(version));
   section_length header_length = cur.offset();
   m->program_offset = cur.get_section_offset() + header_length;
-  m->minimum_instruction_length = cur.fixed<ubyte>();
+  m->minimum_instruction_length = cur.fixed<u8>();
   m->maximum_operations_per_instruction = 1;
-  if (version == 4) m->maximum_operations_per_instruction = cur.fixed<ubyte>();
+  if (version == 4) m->maximum_operations_per_instruction = cur.fixed<u8>();
   if (m->maximum_operations_per_instruction == 0)
     throw format_error(
         "maximum_operations_per_instruction cannot"
         " be 0 in line number table");
-  m->default_is_stmt = cur.fixed<ubyte>();
-  m->line_base = cur.fixed<sbyte>();
-  m->line_range = cur.fixed<ubyte>();
+  m->default_is_stmt = cur.fixed<u8>();
+  m->line_base = cur.fixed<s8>();
+  m->line_range = cur.fixed<u8>();
   if (m->line_range == 0)
     throw format_error("line_range cannot be 0 in line number table");
-  m->opcode_base = cur.fixed<ubyte>();
+  m->opcode_base = cur.fixed<u8>();
 
   static_assert(sizeof(opcode_lengths) / sizeof(opcode_lengths[0]) == 13,
                 "opcode_lengths table has wrong length");
@@ -100,7 +100,7 @@ line_table::line_table(const shared_ptr<section> &sec, section_offset offset,
   m->standard_opcode_lengths.resize(m->opcode_base);
   m->standard_opcode_lengths[0] = 0;
   for (unsigned i = 1; i < m->opcode_base; i++) {
-    auto length = cur.fixed<ubyte>();
+    auto length = cur.fixed<u8>();
     if (length != opcode_lengths[i])
       // The spec never says what to do if the
       // opcode length of a standard opcode doesn't
@@ -266,10 +266,10 @@ auto line_table::iterator::step(cursor *cur) -> bool {
   struct line_table::impl *m = table->m.get();
 
   // Read the opcode (DWARF4 section 6.2.3)
-  auto opcode = cur->fixed<ubyte>();
+  auto opcode = cur->fixed<u8>();
   if (opcode >= m->opcode_base) {
     // Special opcode (DWARF4 section 6.2.5.1)
-    ubyte adjusted_opcode = opcode - m->opcode_base;
+    u8 adjusted_opcode = opcode - m->opcode_base;
     unsigned op_advance = adjusted_opcode / m->line_range;
     signed line_inc = m->line_base + (signed)adjusted_opcode % m->line_range;
 
@@ -333,7 +333,7 @@ auto line_table::iterator::step(cursor *cur) -> bool {
         uarg = (255 - m->opcode_base) / m->line_range;
         goto advance_pc;
       case DW_LNS::fixed_advance_pc:
-        regs.address += cur->fixed<uhalf>();
+        regs.address += cur->fixed<u16>();
         regs.op_index = 0;
         break;
       case DW_LNS::set_prologue_end:
@@ -356,7 +356,7 @@ auto line_table::iterator::step(cursor *cur) -> bool {
     assert(opcode == 0);
     uint64_t length = cur->uleb128();
     section_offset end = cur->get_section_offset() + length;
-    opcode = cur->fixed<ubyte>();
+    opcode = cur->fixed<u8>();
     switch ((DW_LNE)opcode) {
       case DW_LNE::end_sequence:
         regs.end_sequence = true;

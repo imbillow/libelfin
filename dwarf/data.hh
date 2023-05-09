@@ -10,19 +10,18 @@
 
 DWARFPP_BEGIN_NAMESPACE
 
-// Integer representations (Section 7.26)
-typedef std::int8_t sbyte;
-typedef std::uint8_t ubyte;
-typedef std::uint16_t uhalf;
-typedef std::uint32_t uword;
+using s8 = std::int8_t;
+using u8 = std::uint8_t;
+using u16 = std::uint16_t;
+using u32 = std::uint32_t;
 
 // Section offsets and lengths
-typedef std::uint64_t section_offset;
-typedef std::uint64_t section_length;
+using section_offset = std::uint64_t;
+using section_length = std::uint64_t;
 
 // A target machine address.  Targets may use smaller addresses; this
 // represents the largest supported address type.
-typedef std::uint64_t taddr;
+using taddr = std::uint64_t;
 
 // DIE tags (Section 7, figure 18).  typedef, friend, and namespace
 // have a trailing underscore because they are reserved words.
@@ -94,15 +93,15 @@ enum class DW_TAG {
   hi_user = 0xffff,
 };
 
-std::string to_string(DW_TAG v);
+auto to_string(DW_TAG v) -> std::string;
 
 // Child determination (Section 7, figure 19).
-enum class DW_CHILDREN : ubyte {
+enum class DW_CHILDREN : u8 {
   no = 0x00,
   yes = 0x01,
 };
 
-std::string to_string(DW_CHILDREN v);
+auto to_string(DW_CHILDREN v) -> std::string;
 
 // Attribute names (Section 7, figure 20).  inline, friend, mutable,
 // and explicit have a trailing underscore because they are reserved
@@ -212,7 +211,7 @@ enum class DW_AT {
   hi_user = 0x3fff,
 };
 
-std::string to_string(DW_AT v);
+auto to_string(DW_AT v) -> std::string;
 
 // Attribute form encodings (Section 7, figure 21)
 enum class DW_FORM {
@@ -267,10 +266,10 @@ enum class DW_FORM {
   addrx4 = 0x2c,          ///< address
 };
 
-std::string to_string(DW_FORM v);
+auto to_string(DW_FORM v) -> std::string;
 
 // DWARF operation encodings (Section 7.7.1 and figure 24)
-enum class DW_OP : ubyte {
+enum class DW_OP : u8 {
   addr = 0x03,  // [constant address (size target specific)]
   deref = 0x06,
 
@@ -353,7 +352,7 @@ enum class DW_OP : ubyte {
   hi_user = 0xff,
 };
 
-std::string to_string(DW_OP v);
+auto to_string(DW_OP v) -> std::string;
 
 // DW_AT::encoding constants (DWARF4 section 7.8 figure 25)
 enum class DW_ATE {
@@ -380,7 +379,7 @@ enum class DW_ATE {
   hi_user = 0xff,
 };
 
-std::string to_string(DW_ATE v);
+auto to_string(DW_ATE v) -> std::string;
 
 // DW_AT::decimal_sign constants (DWARF4 section 7.8 figure 26)
 enum class DW_DS {
@@ -391,7 +390,7 @@ enum class DW_DS {
   trailing_separate = 0x05,
 };
 
-std::string to_string(DW_DS v);
+auto to_string(DW_DS v) -> std::string;
 
 // DW_AT::endianity constants (DWARF4 section 7.8 figure 27)
 enum class DW_END {
@@ -402,7 +401,7 @@ enum class DW_END {
   hi_user = 0xff,
 };
 
-std::string to_string(DW_END v);
+auto to_string(DW_END v) -> std::string;
 
 // DW_AT::accessibility constants (DWARF4 section 7.9 figure 28)
 enum class DW_ACCESS {
@@ -411,7 +410,7 @@ enum class DW_ACCESS {
   private_ = 0x03,
 };
 
-std::string to_string(DW_ACCESS v);
+auto to_string(DW_ACCESS v) -> std::string;
 
 // DW_AT::visibility constants (DWARF4 section 7.10 figure 29)
 enum class DW_VIS {
@@ -420,7 +419,7 @@ enum class DW_VIS {
   qualified = 0x03,
 };
 
-std::string to_string(DW_VIS v);
+auto to_string(DW_VIS v) -> std::string;
 
 // DW_AT::virtuality constants (DWARF4 section 7.11 figure 30)
 enum class DW_VIRTUALITY {
@@ -429,7 +428,7 @@ enum class DW_VIRTUALITY {
   pure_virtual = 0x02,
 };
 
-std::string to_string(DW_VIRTUALITY v);
+auto to_string(DW_VIRTUALITY v) -> std::string;
 
 // DW_AT::language constants (DWARF4 section 7.12 figure 31)
 enum class DW_LANG {
@@ -458,7 +457,7 @@ enum class DW_LANG {
   hi_user = 0xffff,
 };
 
-std::string to_string(DW_LANG v);
+auto to_string(DW_LANG v) -> std::string;
 
 // DW_AT::identifier_case constants (DWARF4 section 7.14 figure 32)
 enum class DW_ID {
@@ -468,7 +467,7 @@ enum class DW_ID {
   case_insensitive = 0x03,
 };
 
-std::string to_string(DW_ID v);
+auto to_string(DW_ID v) -> std::string;
 
 // DW_AT::calling_convention constants (DWARF4 section 7.15 figure 33)
 enum class DW_CC {
@@ -479,7 +478,7 @@ enum class DW_CC {
   hi_user = 0xff,
 };
 
-std::string to_string(DW_CC v);
+auto to_string(DW_CC v) -> std::string;
 
 // DW_AT::inline constants (DWARF4 section 7.16 figure 34)
 enum class DW_INL {
@@ -489,7 +488,7 @@ enum class DW_INL {
   declared_inlined = 0x03,
 };
 
-std::string to_string(DW_INL v);
+auto to_string(DW_INL v) -> std::string;
 
 // DW_AT::ordering constants (DWARF4 section 7.17 figure 35)
 enum class DW_ORD {
@@ -497,7 +496,7 @@ enum class DW_ORD {
   col_major = 0x01,
 };
 
-std::string to_string(DW_ORD v);
+auto to_string(DW_ORD v) -> std::string;
 
 // DW_AT::discr_list constants (DWARF4 section 7.18 figure 36)
 enum class DW_DSC {
@@ -505,7 +504,7 @@ enum class DW_DSC {
   range = 0x01,
 };
 
-std::string to_string(DW_DSC v);
+auto to_string(DW_DSC v) -> std::string;
 
 // Line number standard opcodes (DWARF4 section 7.21 figure 37)
 enum class DW_LNS {
@@ -525,7 +524,7 @@ enum class DW_LNS {
   set_isa = 0x0c,
 };
 
-std::string to_string(DW_LNS v);
+auto to_string(DW_LNS v) -> std::string;
 
 // Line number extended opcodes (DWARF4 section 7.21 figure 38)
 enum class DW_LNE {
@@ -541,7 +540,7 @@ enum class DW_LNE {
   hi_user = 0xff,
 };
 
-std::string to_string(DW_LNE v);
+auto to_string(DW_LNE v) -> std::string;
 
 DWARFPP_END_NAMESPACE
 

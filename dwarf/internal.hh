@@ -8,6 +8,7 @@
 #include <stdexcept>
 #include <type_traits>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include "../elf/to_hex.hh"
@@ -22,7 +23,7 @@ enum class byte_order { lsb, msb };
 /**
  * Return this system's native byte order.
  */
-static inline byte_order native_order() {
+static inline auto native_order() -> byte_order {
   static const union {
     int i;
     char c[sizeof(int)];
@@ -54,9 +55,9 @@ struct section {
 
   section(const section &o) = default;
 
-  std::shared_ptr<section> slice(section_offset start, section_length len,
-                                 format _fmt = format::unknown,
-                                 unsigned _addr_size = 0) {
+  auto slice(section_offset start, section_length len,
+             format _fmt = format::unknown, unsigned _addr_size = 0)
+      -> std::shared_ptr<section> {
     if (_fmt == format::unknown) _fmt = this->fmt;
     if (_addr_size == 0) _addr_size = this->addr_size;
 
@@ -65,7 +66,7 @@ struct section {
         _fmt, _addr_size);
   }
 
-  [[nodiscard]] size_t size() const { return end - begin; }
+  [[nodiscard]] auto size() const -> size_t { return end - begin; }
 };
 
 /**
@@ -95,7 +96,7 @@ struct cursor {
    * cursor (so this is usually followed by a
    * skip_initial_length).
    */
-  std::shared_ptr<section> subsection();
+  auto subsection() -> std::shared_ptr<section>;
   /**
    * Integers may be encoded using “Little-Endian Base 128” (LEB128) numbers.
    * LEB128 is a scheme for encoding integers densely that exploits the
@@ -103,10 +104,10 @@ struct cursor {
    *
    * The encoding for signed, two’s complement LEB128 (SLEB128) numbers.
    */
-  std::int64_t sleb128();
-  section_offset offset();
+  auto sleb128() -> std::int64_t;
+  auto offset() -> section_offset;
   void string(std::string &out);
-  const char *cstr(size_t *size_out = nullptr);
+  auto cstr(size_t *size_out = nullptr) -> const char *;
 
   void ensure(section_offset bytes) {
     if ((section_offset)(sec->end - pos) < bytes || pos >= sec->end)
@@ -114,7 +115,7 @@ struct cursor {
   }
 
   template <typename T>
-  T fixed() {
+  auto fixed() -> T {
     ensure(sizeof(T));
     static_assert(sizeof(T) <= 8, "T too big");
     uint64_t val = 0;
@@ -135,7 +136,7 @@ struct cursor {
    * LEB128 is a scheme for encoding integers densely that exploits the
    * assumption that most integers are small in magnitude.
    */
-  std::uint64_t uleb128() {
+  auto uleb128() -> std::uint64_t {
     // Appendix C
     // XXX Pre-compute all two byte ULEB's
     std::uint64_t result = 0;
@@ -150,7 +151,7 @@ struct cursor {
     return 0;
   }
 
-  taddr address() {
+  auto address() -> taddr {
     switch (sec->addr_size) {
       case 1:
         return fixed<uint8_t>();
@@ -170,26 +171,28 @@ struct cursor {
   void skip_initial_length();
   void skip_form(DW_FORM form);
 
-  cursor &operator+=(section_offset offset) {
+  auto operator+=(section_offset offset) -> cursor & {
     pos += offset;
     return *this;
   }
 
-  cursor operator+(section_offset offset) const { return {sec, pos + offset}; }
+  auto operator+(section_offset offset) const -> cursor {
+    return {sec, pos + offset};
+  }
 
-  bool operator<(const cursor &o) const { return pos < o.pos; }
+  auto operator<(const cursor &o) const -> bool { return pos < o.pos; }
 
-  [[nodiscard]] bool end() const { return pos >= sec->end; }
+  [[nodiscard]] auto end() const -> bool { return pos >= sec->end; }
 
-  [[nodiscard]] bool valid() const { return pos != nullptr; }
+  [[nodiscard]] auto valid() const -> bool { return pos != nullptr; }
 
-  [[nodiscard]] section_offset get_section_offset() const {
+  [[nodiscard]] auto get_section_offset() const -> section_offset {
     return pos - sec->begin;
   }
 
  private:
-  cursor(const std::shared_ptr<section> &sec, const char *pos)
-      : sec(sec), pos(pos) {}
+  cursor(std::shared_ptr<section> sec, const char *pos)
+      : sec(std::move(sec)), pos(pos) {}
 
   static void underflow();
 };
@@ -207,27 +210,27 @@ struct attribute_spec {
   attribute_spec(DW_AT name, DW_FORM form);
 };
 
-typedef std::uint64_t abbrev_code;
+using abbrev_code = std::uint64_t;
 
 /**
  * An entry in .debug_abbrev.
  */
 struct abbrev_entry {
-  abbrev_code code;
+  abbrev_code code{0};
   DW_TAG tag{};
   bool children{};
   std::vector<attribute_spec> attributes;
 
-  abbrev_entry() : code(0) {}
+  abbrev_entry() {}
 
-  bool read(cursor *cur);
+  auto read(cursor *cur) -> bool;
 };
 
 /**
  * A section header in .debug_pubnames or .debug_pubtypes.
  */
 struct name_unit {
-  uhalf version{};
+  u16 version{};
   section_offset debug_info_offset{};
   section_length debug_info_length{};
   // Cursor to the first name_entry in this unit.  This cursor's
@@ -239,7 +242,7 @@ struct name_unit {
     std::shared_ptr<section> subsec = cur->subsection();
     cursor sub(subsec);
     sub.skip_initial_length();
-    version = sub.fixed<uhalf>();
+    version = sub.fixed<u16>();
     if (version != 2)
       throw format_error("unknown name unit version " +
                          std::to_string(version));

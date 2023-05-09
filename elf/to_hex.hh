@@ -9,7 +9,7 @@
 #include <type_traits>
 
 template <typename T>
-std::string to_hex(T v) {
+auto to_hex(T v) -> std::string {
   static_assert(std::is_integral<T>::value,
                 "to_hex applied to non-integral type");
   if (v == 0) return {"0"};

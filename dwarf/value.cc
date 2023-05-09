@@ -121,7 +121,7 @@ auto value::as_flag() const -> bool {
   switch (form) {
     case DW_FORM::flag: {
       cursor cur(cu->data(), offset);
-      return cur.fixed<ubyte>() != 0;
+      return cur.fixed<u8>() != 0;
     }
     case DW_FORM::flag_present:
       return true;
@@ -155,13 +155,13 @@ auto value::as_reference() const -> die {
   cursor cur(cu->data(), offset);
   switch (form) {
     case DW_FORM::ref1:
-      off = cur.fixed<ubyte>();
+      off = cur.fixed<u8>();
       break;
     case DW_FORM::ref2:
-      off = cur.fixed<uhalf>();
+      off = cur.fixed<u16>();
       break;
     case DW_FORM::ref4:
-      off = cur.fixed<uword>();
+      off = cur.fixed<u32>();
       break;
     case DW_FORM::ref8:
       off = cur.fixed<uint64_t>();

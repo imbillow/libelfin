@@ -45,11 +45,11 @@ dwarf::dwarf(const std::shared_ptr<loader> &_loader)
   // CU. This is always a small but non-zero integer.
   cursor endcur(m->sec_info);
   // Skip length.
-  section_length length = endcur.fixed<uword>();
+  section_length length = endcur.fixed<u32>();
   if (length == 0xffffffff) endcur.fixed<uint64_t>();
   // Get version in both little and big endian.
-  auto version = endcur.fixed<uhalf>();
-  uhalf versionbe = (version >> 8) | ((version & 0xFF) << 8);
+  auto version = endcur.fixed<u16>();
+  u16 versionbe = (version >> 8) | ((version & 0xFF) << 8);
   if (versionbe < version) {
     m->sec_info =
         make_shared<section>(section_type::info, data, size, byte_order::msb);
@@ -233,18 +233,18 @@ compilation_unit::compilation_unit(const dwarf &file, section_offset offset) {
   std::shared_ptr<section> subsec = cur.subsection();
   cursor sub(subsec);
   sub.skip_initial_length();
-  auto version = sub.fixed<uhalf>();
+  auto version = sub.fixed<u16>();
   if (version < 2 || version > 5)
     throw format_error("unknown compilation unit version " +
                        std::to_string(version));
   // .debug_abbrev-relative offset of this unit's abbrevs
   section_offset debug_abbrev_offset{};
   if (version == 5) {
-    subsec->addr_size = sub.fixed<ubyte>();
+    subsec->addr_size = sub.fixed<u8>();
     debug_abbrev_offset = sub.offset();
   } else {
     debug_abbrev_offset = sub.offset();
-    subsec->addr_size = sub.fixed<ubyte>();
+    subsec->addr_size = sub.fixed<u8>();
   }
 
   m = make_shared<impl>(file, offset, subsec, debug_abbrev_offset,
@@ -282,12 +282,12 @@ type_unit::type_unit(const dwarf &file, section_offset offset) {
   std::shared_ptr<section> subsec = cur.subsection();
   cursor sub(subsec);
   sub.skip_initial_length();
-  auto version = sub.fixed<uhalf>();
+  auto version = sub.fixed<u16>();
   if (version != 4)
     throw format_error("unknown type unit version " + std::to_string(version));
   // .debug_abbrev-relative offset of this unit's abbrevs
   section_offset debug_abbrev_offset = sub.offset();
-  auto address_size = sub.fixed<ubyte>();
+  auto address_size = sub.fixed<u8>();
   subsec->addr_size = address_size;
   auto type_signature = sub.fixed<uint64_t>();
   section_offset type_offset = sub.offset();

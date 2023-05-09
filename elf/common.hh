@@ -24,7 +24,7 @@ enum class byte_order { native, lsb, msb };
  * is byte_order::native, it will be resolved to whatever the native
  * byte order is.
  */
-static inline byte_order resolve_order(byte_order o) {
+static inline auto resolve_order(byte_order o) -> byte_order {
   static const union {
     int i;
     char c[sizeof(int)];
@@ -39,7 +39,7 @@ static inline byte_order resolve_order(byte_order o) {
  * Return v converted from one byte order to another.
  */
 template <typename T>
-T swizzle(T v, byte_order from, byte_order to) {
+auto swizzle(T v, byte_order from, byte_order to) -> T {
   static_assert(
       sizeof(T) == 1 || sizeof(T) == 2 || sizeof(T) == 4 || sizeof(T) == 8,
       "cannot swizzle type");
@@ -73,17 +73,17 @@ struct OrderPick;
 
 template <typename Native, typename LSB, typename MSB>
 struct OrderPick<byte_order::native, Native, LSB, MSB> {
-  typedef Native T;
+  using T = Native;
 };
 
 template <typename Native, typename LSB, typename MSB>
 struct OrderPick<byte_order::lsb, Native, LSB, MSB> {
-  typedef LSB T;
+  using T = LSB;
 };
 
 template <typename Native, typename LSB, typename MSB>
 struct OrderPick<byte_order::msb, Native, LSB, MSB> {
-  typedef MSB T;
+  using T = MSB;
 };
 
 ELFPP_END_INTERNAL
