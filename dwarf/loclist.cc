@@ -22,7 +22,7 @@ expr_result loclist::evaluate(expr_context *ctx) const {
   while (true) {
     auto start_addr = loc_cur.fixed<uint64_t>();
     auto end_addr = loc_cur.fixed<uint64_t>();
-    expr_result result;
+    expr_result result{};
 
     // End of list
     if (start_addr == 0 && end_addr == 0) {
@@ -56,7 +56,7 @@ expr_result loclist::evaluate(expr_context *ctx) const {
 
   auto pc = ctx->pc() - at_low_pc(cu->root());
 
-  expr_result result;
+  expr_result result{};
   result.location_type = expr_result::type::empty;
 
   for (auto &&entry : ranges_to_locations) {

@@ -56,7 +56,7 @@ value die::operator[](DW_AT attr) const {
   if (abbrev) {
     int i = 0;
     for (auto &a : abbrev->attributes) {
-      if (a.name == attr) return value(cu, a.name, a.form, a.type, attrs[i]);
+      if (a.name == attr) return {cu, a.name, a.form, a.type, attrs[i]};
       i++;
     }
   }
@@ -90,12 +90,12 @@ value die::resolve(DW_AT attr) const {
     if (s.has(attr)) return s[attr];
   }
 
-  return value();
+  return {};
 }
 
 die::iterator die::begin() const {
   if (!abbrev || !abbrev->children) return end();
-  return iterator(cu, next);
+  return {cu, next};
 }
 
 die::iterator::iterator(const unit *cu, section_offset off) : d(cu) {
@@ -127,7 +127,7 @@ die::iterator &die::iterator::operator++() {
   return *this;
 }
 
-const vector<pair<DW_AT, value>> die::attributes() const {
+vector<pair<DW_AT, value>> die::attributes() const {
   vector<pair<DW_AT, value>> res;
 
   if (!abbrev) return res;
@@ -138,8 +138,7 @@ const vector<pair<DW_AT, value>> die::attributes() const {
   // custom iterator.
   int i = 0;
   for (auto &a : abbrev->attributes) {
-    res.push_back(
-        make_pair(a.name, value(cu, a.name, a.form, a.type, attrs[i])));
+    res.emplace_back(a.name, value(cu, a.name, a.form, a.type, attrs[i]));
     i++;
   }
   return res;

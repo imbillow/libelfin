@@ -2,6 +2,8 @@
 // Use of this source code is governed by an MIT license
 // that can be found in the LICENSE file.
 
+#include <utility>
+
 #include "internal.hh"
 
 using namespace std;
@@ -13,7 +15,8 @@ DWARFPP_BEGIN_NAMESPACE
 //
 
 struct dwarf::impl {
-  impl(const std::shared_ptr<loader> &l) : l(l), have_type_units(false) {}
+  explicit impl(std::shared_ptr<loader> l)
+      : l(std::move(l)), have_type_units(false) {}
 
   std::shared_ptr<loader> l;
 
@@ -45,7 +48,7 @@ dwarf::dwarf(const std::shared_ptr<loader> &l) : m(make_shared<impl>(l)) {
   section_length length = endcur.fixed<uword>();
   if (length == 0xffffffff) endcur.fixed<uint64_t>();
   // Get version in both little and big endian.
-  uhalf version = endcur.fixed<uhalf>();
+  auto version = endcur.fixed<uhalf>();
   uhalf versionbe = (version >> 8) | ((version & 0xFF) << 8);
   if (versionbe < version) {
     m->sec_info =
@@ -69,7 +72,7 @@ dwarf::dwarf(const std::shared_ptr<loader> &l) : m(make_shared<impl>(l)) {
   }
 }
 
-dwarf::~dwarf() {}
+dwarf::~dwarf() = default;
 
 const std::vector<compilation_unit> &dwarf::compilation_units() const {
   static std::vector<compilation_unit> empty;
@@ -141,13 +144,12 @@ struct unit::impl {
   std::vector<abbrev_entry> abbrevs_vec;
   std::unordered_map<abbrev_code, abbrev_entry> abbrevs_map;
 
-  impl(const dwarf &file, section_offset offset,
-       const std::shared_ptr<section> &subsec,
+  impl(dwarf file, section_offset offset, std::shared_ptr<section> subsec,
        section_offset debug_abbrev_offset, section_offset root_offset,
        uint64_t type_signature = 0, section_offset type_offset = 0)
-      : file(file),
+      : file(std::move(file)),
         offset(offset),
-        subsec(subsec),
+        subsec(std::move(subsec)),
         debug_abbrev_offset(debug_abbrev_offset),
         root_offset(root_offset),
         type_signature(type_signature),
@@ -157,7 +159,7 @@ struct unit::impl {
   void force_abbrevs();
 };
 
-unit::~unit() {}
+unit::~unit() = default;
 
 const dwarf &unit::get_dwarf() const { return m->file; }
 
@@ -214,7 +216,7 @@ void unit::impl::force_abbrevs() {
     // Move the map into the vector
     abbrevs_vec.resize(highest + 1);
     for (auto &entry : abbrevs_map)
-      abbrevs_vec[entry.first] = move(entry.second);
+      abbrevs_vec[entry.first] = std::move(entry.second);
     abbrevs_map.clear();
   }
 
@@ -231,13 +233,13 @@ compilation_unit::compilation_unit(const dwarf &file, section_offset offset) {
   std::shared_ptr<section> subsec = cur.subsection();
   cursor sub(subsec);
   sub.skip_initial_length();
-  uhalf version = sub.fixed<uhalf>();
+  auto version = sub.fixed<uhalf>();
   if (version < 2 || version > 5)
     throw format_error("unknown compilation unit version " +
                        std::to_string(version));
   // .debug_abbrev-relative offset of this unit's abbrevs
   section_offset debug_abbrev_offset = sub.offset();
-  ubyte address_size = sub.fixed<ubyte>();
+  auto address_size = sub.fixed<ubyte>();
   subsec->addr_size = address_size;
 
   m = make_shared<impl>(file, offset, subsec, debug_abbrev_offset,
@@ -275,14 +277,14 @@ type_unit::type_unit(const dwarf &file, section_offset offset) {
   std::shared_ptr<section> subsec = cur.subsection();
   cursor sub(subsec);
   sub.skip_initial_length();
-  uhalf version = sub.fixed<uhalf>();
+  auto version = sub.fixed<uhalf>();
   if (version != 4)
     throw format_error("unknown type unit version " + std::to_string(version));
   // .debug_abbrev-relative offset of this unit's abbrevs
   section_offset debug_abbrev_offset = sub.offset();
-  ubyte address_size = sub.fixed<ubyte>();
+  auto address_size = sub.fixed<ubyte>();
   subsec->addr_size = address_size;
-  uint64_t type_signature = sub.fixed<uint64_t>();
+  auto type_signature = sub.fixed<uint64_t>();
   section_offset type_offset = sub.offset();
 
   m = make_shared<impl>(file, offset, subsec, debug_abbrev_offset,

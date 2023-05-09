@@ -114,7 +114,7 @@ expr value::as_exprloc() const {
       throw value_type_mismatch("cannot read " + to_string(typ) +
                                 " as exprloc");
   }
-  return expr(cu, cur.get_section_offset(), size);
+  return {cu, cur.get_section_offset(), size};
 }
 
 bool value::as_flag() const {
@@ -131,7 +131,7 @@ bool value::as_flag() const {
 }
 loclist value::as_loclist() const {
   cursor cur(cu->data(), offset);
-  return loclist(cu, cur.get_section_offset());
+  return {cu, cur.get_section_offset()};
 }
 
 rangelist value::as_rangelist() const {
@@ -186,7 +186,7 @@ die value::as_reference() const {
     }
 
     case DW_FORM::ref_sig8: {
-      uint64_t sig = cur.fixed<uint64_t>();
+      auto sig = cur.fixed<uint64_t>();
       try {
         return cu->get_dwarf().get_type_unit(sig).type();
       } catch (std::out_of_range &e) {

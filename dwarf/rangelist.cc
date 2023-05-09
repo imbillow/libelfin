@@ -2,6 +2,8 @@
 // Use of this source code is governed by an MIT license
 // that can be found in the LICENSE file.
 
+#include <utility>
+
 #include "internal.hh"
 
 using namespace std;
@@ -35,7 +37,7 @@ rangelist::iterator rangelist::begin() const {
   return end();
 }
 
-rangelist::iterator rangelist::end() const { return iterator(); }
+rangelist::iterator rangelist::end() { return {}; }
 
 bool rangelist::contains(taddr addr) const {
   for (auto ent : *this)
@@ -43,9 +45,8 @@ bool rangelist::contains(taddr addr) const {
   return false;
 }
 
-rangelist::iterator::iterator(const std::shared_ptr<section> &sec,
-                              taddr base_addr)
-    : sec(sec), base_addr(base_addr), pos(0) {
+rangelist::iterator::iterator(std::shared_ptr<section> sec, taddr base_addr)
+    : sec(std::move(sec)), base_addr(base_addr), pos(0) {
   // Read in the first entry
   ++(*this);
 }

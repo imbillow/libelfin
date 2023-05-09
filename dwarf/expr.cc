@@ -50,7 +50,7 @@ expr_result expr::evaluate(
   // Prepare the expression result.  Some location descriptions
   // create the result directly, rather than using the top of
   // stack.
-  expr_result result;
+  expr_result result{};
 
   // 2.6.1.1.4 Empty location descriptions
   if (cur.end()) {
@@ -69,21 +69,21 @@ expr_result expr::evaluate(
   do {                                 \
     if (stack.empty()) goto underflow; \
   } while (0)
-#define CHECKN(n)                         \
-  do {                                    \
-    if (stack.size() < n) goto underflow; \
+#define CHECKN(n)                           \
+  do {                                      \
+    if (stack.size() < (n)) goto underflow; \
   } while (0)
     union {
       uint64_t u;
       int64_t s;
-    } tmp1, tmp2, tmp3;
+    } tmp1{}, tmp2{}, tmp3{};
     static_assert(sizeof(tmp1) == sizeof(taddr), "taddr is not 64 bits");
 
     // Tell GCC to warn us about missing switch cases,
     // even though we have a default case.
 #pragma GCC diagnostic push
 #pragma GCC diagnostic warning "-Wswitch-enum"
-    DW_OP op = (DW_OP)cur.fixed<ubyte>();
+    auto op = (DW_OP)cur.fixed<ubyte>();
     switch (op) {
         // 2.5.1.1 Literal encodings
       case DW_OP::lit0... DW_OP::lit31:

@@ -160,11 +160,11 @@ bool abbrev_entry::read(cursor* cur) {
 
   tag = (DW_TAG)cur->uleb128();
   children = cur->fixed<DW_CHILDREN>() == DW_CHILDREN::yes;
-  while (1) {
-    DW_AT name = (DW_AT)cur->uleb128();
-    DW_FORM form = (DW_FORM)cur->uleb128();
+  while (true) {
+    auto name = (DW_AT)cur->uleb128();
+    auto form = (DW_FORM)cur->uleb128();
     if (name == (DW_AT)0 && form == (DW_FORM)0) break;
-    attributes.push_back(attribute_spec(name, form));
+    attributes.emplace_back(name, form);
   }
   attributes.shrink_to_fit();
   return true;

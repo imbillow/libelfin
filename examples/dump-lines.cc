@@ -1,6 +1,7 @@
-#include <errno.h>
 #include <fcntl.h>
-#include <inttypes.h>
+
+#include <cerrno>
+#include <cinttypes>
 
 #include "dwarf++.hh"
 #include "elf++.hh"
@@ -32,7 +33,7 @@ int main(int argc, char **argv) {
   elf::elf ef(elf::create_mmap_loader(fd));
   dwarf::dwarf dw(dwarf::elf::create_loader(ef));
 
-  for (auto cu : dw.compilation_units()) {
+  for (const auto &cu : dw.compilation_units()) {
     printf("--- <%x>\n", (unsigned int)cu.get_section_offset());
     dump_line_table(cu.get_line_table());
     printf("\n");

@@ -285,7 +285,7 @@ class strtab {
    * undefined behavior.
    */
   strtab() = default;
-  strtab(elf f, const void *data, size_t size);
+  strtab(const elf &f, const void *data, size_t size);
 
   bool valid() const { return !!m; }
 
@@ -312,10 +312,10 @@ class strtab {
  */
 class sym {
   const strtab strs;
-  Sym<> data;
+  Sym<> data{};
 
  public:
-  sym(elf f, const void *data, strtab strs);
+  sym(const elf &f, const void *data, strtab strs);
 
   /**
    * Return this symbol's raw data.
@@ -351,7 +351,7 @@ class symtab {
    * undefined behavior.
    */
   symtab() = default;
-  symtab(elf f, const void *data, size_t size, strtab strs);
+  symtab(const elf &f, const void *data, size_t size, const strtab &strs);
 
   bool valid() const { return !!m; }
 

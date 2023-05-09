@@ -41,6 +41,7 @@ struct section {
   const format fmt;
   const byte_order ord;
   unsigned addr_size;
+  void *unit_type{};
 
   section(section_type type, const void *begin, section_length length,
           byte_order ord, format fmt = format::unknown, unsigned addr_size = 0)
@@ -64,7 +65,7 @@ struct section {
         fmt, addr_size);
   }
 
-  size_t size() const { return end - begin; }
+  [[nodiscard]] size_t size() const { return end - begin; }
 };
 
 /**
@@ -177,7 +178,7 @@ struct cursor {
   cursor(const std::shared_ptr<section> sec, const char *pos)
       : sec(sec), pos(pos) {}
 
-  void underflow();
+  static void underflow();
 };
 
 /**

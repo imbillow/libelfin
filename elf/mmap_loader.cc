@@ -2,13 +2,13 @@
 // Use of this source code is governed by an MIT license
 // that can be found in the LICENSE file.
 
-#include <errno.h>
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <cerrno>
 #include <system_error>
 
 #include "elf++.hh"
@@ -22,7 +22,7 @@ class mmap_loader : public loader {
   size_t lim;
 
  public:
-  mmap_loader(int fd) {
+  explicit mmap_loader(int fd) {
     off_t end = lseek(fd, 0, SEEK_END);
     if (end == (off_t)-1)
       throw system_error(errno, system_category(), "finding file length");
@@ -34,9 +34,9 @@ class mmap_loader : public loader {
     close(fd);
   }
 
-  ~mmap_loader() { munmap(base, lim); }
+  ~mmap_loader() override { munmap(base, lim); }
 
-  const void *load(off_t offset, size_t size) {
+  const void *load(off_t offset, size_t size) override {
     if (offset + size > lim) throw range_error("offset exceeds file size");
     return (const char *)base + offset;
   }

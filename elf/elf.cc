@@ -3,6 +3,7 @@
 // that can be found in the LICENSE file.
 
 #include <cstring>
+#include <utility>
 
 #include "elf++.hh"
 
@@ -41,10 +42,10 @@ void canon_hdr(Hdr<Elf64, byte_order::native> *out, const void *data,
 //
 
 struct elf::impl {
-  impl(const shared_ptr<loader> &l) : l(l) {}
+  explicit impl(const shared_ptr<loader> &l) : l(l) {}
 
   const shared_ptr<loader> l;
-  Ehdr<> hdr;
+  Ehdr<> hdr{};
   vector<section> sections;
   vector<segment> segments;
 
@@ -90,7 +91,7 @@ elf::elf(const std::shared_ptr<loader> &l) : m(make_shared<impl>(l)) {
   const void *seg_data = l->load(m->hdr.phoff, m->hdr.phentsize * m->hdr.phnum);
   for (unsigned i = 0; i < m->hdr.phnum; i++) {
     const void *seg = ((const char *)seg_data) + i * m->hdr.phentsize;
-    m->segments.push_back(segment(*this, seg));
+    m->segments.emplace_back(*this, seg);
   }
 
   // Load sections
@@ -100,7 +101,7 @@ elf::elf(const std::shared_ptr<loader> &l) : m(make_shared<impl>(l)) {
     // XXX Circular reference.  Maybe this should be
     // constructed on the fly?  Canonicalizing the header
     // isn't super-cheap.
-    m->sections.push_back(section(*this, sec));
+    m->sections.emplace_back(*this, sec);
   }
 }
 
@@ -133,10 +134,10 @@ const segment &elf::get_segment(unsigned index) const {
 //
 
 struct segment::impl {
-  impl(const elf &f) : f(f), data(nullptr) {}
+  explicit impl(elf f) : f(std::move(f)), data(nullptr) {}
 
   const elf f;
-  Phdr<> hdr;
+  Phdr<> hdr{};
   const void *data;
 };
 
@@ -167,12 +168,12 @@ std::string enums::to_string(shn v) {
 }
 
 struct section::impl {
-  impl(const elf &f) : f(f), name(nullptr), data(nullptr) {}
+  explicit impl(elf f) : f(std::move(f)), name(nullptr), data(nullptr) {}
 
   const elf f;
-  Shdr<> hdr;
+  Shdr<> hdr{};
   const char *name;
-  size_t name_len;
+  size_t name_len{};
   const void *data;
 };
 
@@ -205,14 +206,13 @@ size_t section::size() const { return m->hdr.size; }
 strtab section::as_strtab() const {
   if (m->hdr.type != sht::strtab)
     throw section_type_mismatch("cannot use section as strtab");
-  return strtab(m->f, data(), size());
+  return {m->f, data(), size()};
 }
 
 symtab section::as_symtab() const {
   if (m->hdr.type != sht::symtab && m->hdr.type != sht::dynsym)
     throw section_type_mismatch("cannot use section as symtab");
-  return symtab(m->f, data(), size(),
-                m->f.get_section(get_hdr().link).as_strtab());
+  return {m->f, data(), size(), m->f.get_section(get_hdr().link).as_strtab()};
 }
 
 //////////////////////////////////////////////////////////////////
@@ -220,14 +220,14 @@ symtab section::as_symtab() const {
 //
 
 struct strtab::impl {
-  impl(const elf &f, const char *data, const char *end)
-      : f(f), data(data), end(end) {}
+  impl(elf f, const char *data, const char *end)
+      : f(std::move(f)), data(data), end(end) {}
 
   const elf f;
   const char *data, *end;
 };
 
-strtab::strtab(elf f, const void *data, size_t size)
+strtab::strtab(const elf &f, const void *data, size_t size)
     : m(make_shared<impl>(f, (const char *)data, (const char *)data + size)) {}
 
 const char *strtab::get(Elf64::Off offset, size_t *len_out) const {
@@ -254,7 +254,8 @@ std::string strtab::get(Elf64::Off offset) const {
 // class sym
 //
 
-sym::sym(elf f, const void *data, strtab strs) : strs(strs) {
+sym::sym(const elf &f, const void *data, strtab strs)
+    : strs(std::move(std::move(strs))) {
   canon_hdr(&this->data, data, f.get_hdr().ei_class, f.get_hdr().ei_data);
 }
 
@@ -269,15 +270,18 @@ std::string sym::get_name() const { return strs.get(get_data().name); }
 //
 
 struct symtab::impl {
-  impl(const elf &f, const char *data, const char *end, strtab strs)
-      : f(f), data(data), end(end), strs(strs) {}
+  impl(elf f, const char *data, const char *end, strtab strs)
+      : f(std::move(f)),
+        data(data),
+        end(end),
+        strs(std::move(std::move(strs))) {}
 
   const elf f;
   const char *data, *end;
   const strtab strs;
 };
 
-symtab::symtab(elf f, const void *data, size_t size, strtab strs)
+symtab::symtab(const elf &f, const void *data, size_t size, const strtab &strs)
     : m(make_shared<impl>(f, (const char *)data, (const char *)data + size,
                           strs)) {}
 

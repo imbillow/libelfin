@@ -3,6 +3,7 @@
 // that can be found in the LICENSE file.
 
 #include <cassert>
+#include <utility>
 
 #include "internal.hh"
 
@@ -24,13 +25,13 @@ struct line_table::impl {
   shared_ptr<section> sec;
 
   // Header information
-  section_offset program_offset;
-  ubyte minimum_instruction_length;
-  ubyte maximum_operations_per_instruction;
-  bool default_is_stmt;
-  sbyte line_base;
-  ubyte line_range;
-  ubyte opcode_base;
+  section_offset program_offset{};
+  ubyte minimum_instruction_length{};
+  ubyte maximum_operations_per_instruction{};
+  bool default_is_stmt{};
+  sbyte line_base{};
+  ubyte line_range{};
+  ubyte opcode_base{};
   vector<ubyte> standard_opcode_lengths;
   vector<string> include_directories;
   vector<file> file_names;
@@ -72,7 +73,7 @@ line_table::line_table(const shared_ptr<section> &sec, section_offset offset,
   m->sec->addr_size = cu_addr_size;
 
   // Basic header information
-  uhalf version = cur.fixed<uhalf>();
+  auto version = cur.fixed<uhalf>();
   if (version < 2 || version > 4)
     throw format_error("unknown line number table version " +
                        std::to_string(version));
@@ -99,7 +100,7 @@ line_table::line_table(const shared_ptr<section> &sec, section_offset offset,
   m->standard_opcode_lengths.resize(m->opcode_base);
   m->standard_opcode_lengths[0] = 0;
   for (unsigned i = 1; i < m->opcode_base; i++) {
-    ubyte length = cur.fixed<ubyte>();
+    auto length = cur.fixed<ubyte>();
     if (length != opcode_lengths[i])
       // The spec never says what to do if the
       // opcode length of a standard opcode doesn't
@@ -120,7 +121,7 @@ line_table::line_table(const shared_ptr<section> &sec, section_offset offset,
     if (incdir.empty()) break;
     if (incdir.back() != '/') incdir += '/';
     if (incdir[0] == '/')
-      m->include_directories.push_back(move(incdir));
+      m->include_directories.push_back(std::move(incdir));
     else
       m->include_directories.push_back(comp_dir + incdir);
   }
@@ -138,13 +139,13 @@ line_table::line_table(const shared_ptr<section> &sec, section_offset offset,
 }
 
 line_table::iterator line_table::begin() const {
-  if (!valid()) return iterator(nullptr, 0);
-  return iterator(this, m->program_offset);
+  if (!valid()) return {nullptr, 0};
+  return {this, m->program_offset};
 }
 
 line_table::iterator line_table::end() const {
-  if (!valid()) return iterator(nullptr, 0);
-  return iterator(this, m->sec->size());
+  if (!valid()) return {nullptr, 0};
+  return {this, m->sec->size()};
 }
 
 line_table::iterator line_table::find_address(taddr addr) const {
@@ -192,7 +193,7 @@ bool line_table::impl::read_file_entry(cursor *cur, bool in_header) {
   last_file_name_end = cur->get_section_offset();
 
   if (file_name[0] == '/')
-    file_names.emplace_back(move(file_name), mtime, length);
+    file_names.emplace_back(std::move(file_name), mtime, length);
   else if (dir_index < include_directories.size())
     file_names.emplace_back(include_directories[dir_index] + file_name, mtime,
                             length);
@@ -204,7 +205,7 @@ bool line_table::impl::read_file_entry(cursor *cur, bool in_header) {
 }
 
 line_table::file::file(string path, uint64_t mtime, uint64_t length)
-    : path(path), mtime(mtime), length(length) {}
+    : path(std::move(std::move(path))), mtime(mtime), length(length) {}
 
 void line_table::entry::reset(bool is_stmt) {
   address = op_index = 0;
@@ -265,7 +266,7 @@ bool line_table::iterator::step(cursor *cur) {
   struct line_table::impl *m = table->m.get();
 
   // Read the opcode (DWARF4 section 6.2.3)
-  ubyte opcode = cur->fixed<ubyte>();
+  auto opcode = cur->fixed<ubyte>();
   if (opcode >= m->opcode_base) {
     // Special opcode (DWARF4 section 6.2.5.1)
     ubyte adjusted_opcode = opcode - m->opcode_base;

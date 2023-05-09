@@ -1,7 +1,7 @@
-#include <errno.h>
 #include <fcntl.h>
-#include <inttypes.h>
 
+#include <cerrno>
+#include <cinttypes>
 #include <string>
 
 #include "dwarf++.hh"

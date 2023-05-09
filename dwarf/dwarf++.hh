@@ -83,13 +83,30 @@ enum class section_type {
   frame,
   info,
   line,
-  loc,
+  loc,  ///< <V5
   macinfo,
   pubnames,
   pubtypes,
-  ranges,
+  ranges,  ///< <V5
   str,
   types,
+  addr,
+  line_str,
+  loclists,  ///< V5
+  rnglists,  ///< V5
+  macro,
+  sup,
+  altlink,
+  str_offsets,
+  abbrev_dwo,
+  info_dwo,
+  line_dwo,
+  loclists_dwo,
+  macro_dwo,
+  str_dwo,
+  str_offset_dwo,
+  cu_index,
+  tu_index
 };
 
 std::string to_string(section_type v);
@@ -381,7 +398,7 @@ class die {
   /**
    * Return a vector of the attributes of this DIE.
    */
-  const std::vector<std::pair<DW_AT, value> > attributes() const;
+  std::vector<std::pair<DW_AT, value> > attributes() const;
 
   bool operator==(const die &o) const;
   bool operator!=(const die &o) const;
@@ -916,7 +933,7 @@ class rangelist {
    * Return an iterator to one past the last entry in this range
    * list.
    */
-  iterator end() const;
+  static iterator end();
 
   /**
    * Return true if this range list contains the given address.
@@ -957,7 +974,7 @@ class rangelist::iterator {
    * from the beginning of the given section and starts with the
    * given base address.
    */
-  iterator(const std::shared_ptr<section> &sec, taddr base_addr);
+  iterator(std::shared_ptr<section> sec, taddr base_addr);
 
   /** Copy constructor */
   iterator(const iterator &o) = default;
@@ -1265,7 +1282,7 @@ class line_table::iterator {
 
  private:
   const line_table *table;
-  line_table::entry entry, regs;
+  line_table::entry entry{}, regs{};
   section_offset pos;
 
   /**
