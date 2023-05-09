@@ -386,18 +386,18 @@ class die {
   bool operator==(const die &o) const;
   bool operator!=(const die &o) const;
 
+  /**
+   * Return true if the given section offset is contained within
+   * this DIE
+   */
+  bool contains_section_offset(section_offset off) const;
+
  private:
   friend class unit;
   friend class type_unit;
   friend class value;
   // XXX If we can get the CU, we don't need this
   friend struct ::std::hash<die>;
-        /**
-         * Return true if the given section offset is contained within
-         * this DIE
-         */
-        bool contains_section_offset(section_offset off) const;
-
 
   const unit *cu;
   // The abbrev of this DIE.  By convention, if this DIE
@@ -604,9 +604,9 @@ class value {
    */
   bool as_flag() const;
 
-        // XXX macptr
+  // XXX macptr
 
-        loclist as_loclist() const;
+  loclist as_loclist() const;
 
   /**
    * Return this value as a rangelist.
@@ -758,13 +758,10 @@ class expr_context {
   virtual taddr form_tls_address(taddr address) {
     throw expr_error("DW_OP_form_tls_address operations not supported");
   }
-        /**
-         * Implement DW_OP_form_tls_address.
-         */
-        virtual taddr pc()
-        {
-                throw expr_error("loclist operations not supported");
-        }
+  /**
+   * Implement DW_OP_form_tls_address.
+   */
+  virtual taddr pc() { throw expr_error("loclist operations not supported"); }
 };
 
 /**
@@ -838,30 +835,28 @@ class expr_result {
 
 std::string to_string(expr_result::type v);
 
-class loclist
-{
-public:
-        /**
-         * Return the result of evaluating this expression using the
-         * specified expression context.  The expression stack will be
-         * initialized with the given arguments such that the first
-         * arguments is at the top of the stack and the last argument
-         * at the bottom of the stack.
-         *
-         * Throws expr_error if there is an error evaluating the
-         * expression (such as an unknown operation, stack underflow,
-         * bounds error, etc.)
-         */
-        expr_result evaluate(expr_context *ctx) const;
+class loclist {
+ public:
+  /**
+   * Return the result of evaluating this expression using the
+   * specified expression context.  The expression stack will be
+   * initialized with the given arguments such that the first
+   * arguments is at the top of the stack and the last argument
+   * at the bottom of the stack.
+   *
+   * Throws expr_error if there is an error evaluating the
+   * expression (such as an unknown operation, stack underflow,
+   * bounds error, etc.)
+   */
+  expr_result evaluate(expr_context *ctx) const;
 
-private:
-        loclist(const unit *cu,
-                section_offset offset);
+ private:
+  loclist(const unit *cu, section_offset offset);
 
-        friend class value;
+  friend class value;
 
-        const unit *cu;
-        section_offset offset;
+  const unit *cu;
+  section_offset offset;
 };
 
 //////////////////////////////////////////////////////////////////
