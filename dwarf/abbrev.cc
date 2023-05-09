@@ -140,6 +140,42 @@ static value::type resolve_type(DW_AT name, DW_FORM form) {
           throw format_error("DW_FORM_sec_offset not expected for attribute " +
                              to_string(name));
       }
+    case DW_FORM::strx:
+      break;
+    case DW_FORM::addrx:
+      break;
+    case DW_FORM::ref_sup4:
+      break;
+    case DW_FORM::strp_sup:
+      break;
+    case DW_FORM::data16:
+      break;
+    case DW_FORM::line_strp:
+      break;
+    case DW_FORM::implicit_const:
+      break;
+    case DW_FORM::loclistx:
+      break;
+    case DW_FORM::rnglistx:
+      break;
+    case DW_FORM::ref_sup8:
+      break;
+    case DW_FORM::strx1:
+      break;
+    case DW_FORM::strx2:
+      break;
+    case DW_FORM::strx3:
+      break;
+    case DW_FORM::strx4:
+      break;
+    case DW_FORM::addrx1:
+      break;
+    case DW_FORM::addrx2:
+      break;
+    case DW_FORM::addrx3:
+      break;
+    case DW_FORM::addrx4:
+      break;
   }
   throw format_error("unknown attribute form " + to_string(form));
 }

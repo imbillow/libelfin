@@ -2,8 +2,8 @@
 // Use of this source code is governed by an MIT license
 // that can be found in the LICENSE file.
 
-#ifndef _DWARFPP_HH_
-#define _DWARFPP_HH_
+#ifndef DWARFPP_HH_
+#define DWARFPP_HH_
 
 #ifndef DWARFPP_BEGIN_NAMESPACE
 #define DWARFPP_BEGIN_NAMESPACE namespace dwarf {
@@ -13,6 +13,7 @@
 #include <initializer_list>
 #include <map>
 #include <memory>
+#include <ranges>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -125,7 +126,7 @@ class dwarf {
    * Construct a DWARF file that is backed by sections read from
    * the given loader.
    */
-  explicit dwarf(const std::shared_ptr<loader> &l);
+  explicit dwarf(const std::shared_ptr<loader> &_loader);
 
   /**
    * Construct a DWARF file that is initially not valid.
@@ -146,7 +147,7 @@ class dwarf {
    * Return true if this object represents a DWARF file.
    * Default constructed dwarf objects are not valid.
    */
-  bool valid() const { return !!m; }
+  [[nodiscard]] bool valid() const { return !!m; }
 
   // XXX This allows the compilation units to be modified and
   // ties us to a vector.  Probably should return an opaque
@@ -154,20 +155,20 @@ class dwarf {
   /**
    * Return the list of compilation units in this DWARF file.
    */
-  const std::vector<compilation_unit> &compilation_units() const;
+  [[nodiscard]] const std::vector<compilation_unit> &compilation_units() const;
 
   /**
    * Return the type unit with the given signature.  If the
    * signature does not correspond to a type unit, throws
    * out_of_range.
    */
-  const type_unit &get_type_unit(uint64_t type_signature) const;
+  [[nodiscard]] const type_unit &get_type_unit(uint64_t type_signature) const;
 
   /**
    * \internal Retrieve the specified section from this file.
    * If the section does not exist, throws format_error.
    */
-  std::shared_ptr<section> get_section(section_type type) const;
+  [[nodiscard]] std::shared_ptr<section> get_section(section_type type) const;
 
  private:
   struct impl;
@@ -179,7 +180,7 @@ class dwarf {
  */
 class loader {
  public:
-  virtual ~loader() {}
+  virtual ~loader() = default;
 
   /**
    * Load the requested DWARF section into memory and return a
@@ -209,36 +210,36 @@ class unit {
    * Return true if this object is valid.  Default constructed
    * unit objects are not valid.
    */
-  bool valid() const { return !!m; }
+  [[nodiscard]] bool valid() const { return !!m; }
 
   /**
    * Return the dwarf file this unit is in.
    */
-  const dwarf &get_dwarf() const;
+  [[nodiscard]] const dwarf &get_dwarf() const;
 
   /**
    * Return the byte offset of this unit's header in its
    * section (.debug_info or .debug_types).
    */
-  section_offset get_section_offset() const;
+  [[nodiscard]] section_offset get_section_offset() const;
 
   /**
    * Return the root DIE of this unit.  For a compilation unit,
    * this should be a DW_TAG::compilation_unit or
    * DW_TAG::partial_unit.
    */
-  const die &root() const;
+  [[nodiscard]] const die &root() const;
 
   /**
    * \internal Return the data for this unit.
    */
-  const std::shared_ptr<section> &data() const;
+  [[nodiscard]] const std::shared_ptr<section> &data() const;
 
   /**
    * \internal Return the abbrev for the specified abbrev
    * code.
    */
-  const abbrev_entry &get_abbrev(std::uint64_t acode) const;
+  [[nodiscard]] const abbrev_entry &get_abbrev(std::uint64_t acode) const;
 
  protected:
   friend struct ::std::hash<unit>;
@@ -271,7 +272,7 @@ class compilation_unit : public unit {
    * Returns an invalid line table if this unit has no line
    * table.
    */
-  const line_table &get_line_table() const;
+  [[nodiscard]] const line_table &get_line_table() const;
 };
 
 /**
@@ -298,7 +299,7 @@ class type_unit : public unit {
    * type unit.  This is how DIEs from other units refer to type
    * described by this unit.
    */
-  uint64_t get_type_signature() const;
+  [[nodiscard]] uint64_t get_type_signature() const;
 
   // XXX Can a type unit contain more than one top-level DIE?
   // The description of type_offset makes it sound like it
@@ -309,7 +310,7 @@ class type_unit : public unit {
    * This may not be the root DIE of this unit if the type is
    * nested in namespaces or other structures.
    */
-  const die &type() const;
+  [[nodiscard]] const die &type() const;
 };
 
 //////////////////////////////////////////////////////////////////
@@ -327,9 +328,10 @@ class die {
   // for use in caches since it will keep the DWARF file alive.
   // OTOH, maybe caches need eviction anyway.
  public:
-  DW_TAG tag;
+  DW_TAG tag{};
 
   die() : cu(nullptr), abbrev(nullptr) {}
+  die(unit *cu, section_offset off) : cu(cu), abbrev(nullptr) { read(off); }
   die(const die &o) = default;
   die(die &&o) = default;
 
@@ -341,27 +343,27 @@ class die {
    * file.  Default constructed objects are not valid and some
    * methods return invalid DIEs to indicate failures.
    */
-  bool valid() const { return abbrev != nullptr; }
+  [[nodiscard]] bool valid() const { return abbrev != nullptr; }
 
   /**
    * Return the unit containing this DIE.
    */
-  const unit &get_unit() const;
+  [[nodiscard]] const unit &get_unit() const;
 
   /**
    * Return this DIE's byte offset within its compilation unit.
    */
-  section_offset get_unit_offset() const { return offset; }
+  [[nodiscard]] section_offset get_unit_offset() const { return offset; }
 
   /**
    * Return this DIE's byte offset within its section.
    */
-  section_offset get_section_offset() const;
+  [[nodiscard]] section_offset get_section_offset() const;
 
   /**
    * Return true if this DIE has the requested attribute.
    */
-  bool has(DW_AT attr) const;
+  [[nodiscard]] bool has(DW_AT attr) const;
 
   /**
    * Return the value of attr.  Throws out_of_range if this DIE
@@ -382,7 +384,7 @@ class die {
    * "abstract origin" and the original DIE will inherit the
    * attributes of its abstract origin (DWARF4 section 3.3.8.2).
    */
-  value resolve(DW_AT attr) const;
+  [[nodiscard]] value resolve(DW_AT attr) const;
 
   class iterator;
 
@@ -398,7 +400,7 @@ class die {
   /**
    * Return a vector of the attributes of this DIE.
    */
-  std::vector<std::pair<DW_AT, value> > attributes() const;
+  [[nodiscard]] std::vector<std::pair<DW_AT, value>> attributes() const;
 
   bool operator==(const die &o) const;
   bool operator!=(const die &o) const;
@@ -407,7 +409,7 @@ class die {
    * Return true if the given section offset is contained within
    * this DIE
    */
-  bool contains_section_offset(section_offset off) const;
+  [[nodiscard]] bool contains_section_offset(section_offset off) const;
 
  private:
   friend class unit;
@@ -422,16 +424,16 @@ class die {
   // object is kept live by the CU.
   const abbrev_entry *abbrev;
   // The beginning of this DIE, relative to the CU.
-  section_offset offset;
+  section_offset offset{};
   // Offsets of attributes, relative to cu's subsection.  The
   // vast majority of DIEs tend to have six or fewer attributes,
   // so we reserve space in the DIE itself for six attributes.
   small_vector<section_offset, 6> attrs;
   // The offset of the next DIE, relative to cu'd subsection.
   // This is set even for sibling list terminators.
-  section_offset next;
+  section_offset next{};
 
-  die(const unit *cu);
+  explicit die(const unit *cu);
 
   /**
    * Read this DIE from the given offset in cu.
@@ -552,20 +554,20 @@ class value {
    * Return true if this object represents a valid value.
    * Default constructed line tables are not valid.
    */
-  bool valid() const { return typ != type::invalid; }
+  [[nodiscard]] bool valid() const { return typ != type::invalid; }
 
   /**
    * Return this value's byte offset within its compilation
    * unit.
    */
-  section_offset get_unit_offset() const { return offset; }
+  [[nodiscard]] section_offset get_unit_offset() const { return offset; }
 
   /**
    * Return this value's byte offset within its section.
    */
-  section_offset get_section_offset() const;
+  [[nodiscard]] section_offset get_section_offset() const;
 
-  type get_type() const { return typ; }
+  [[nodiscard]] type get_type() const { return typ; }
 
   /**
    * Return this value's attribute encoding.  This automatically
@@ -574,12 +576,12 @@ class value {
    * types is non-trivial and often depends on the attribute
    * (especially prior to DWARF 4).
    */
-  DW_FORM get_form() const { return form; }
+  [[nodiscard]] DW_FORM get_form() const { return form; }
 
   /**
    * Return this value as a target machine address.
    */
-  taddr as_address() const;
+  [[nodiscard]] taddr as_address() const;
 
   /**
    * Return this value as a block.  The returned pointer points
@@ -598,14 +600,14 @@ class value {
    * automatically coerces "constant" type values by
    * interpreting their bytes as unsigned.
    */
-  uint64_t as_uconstant() const;
+  [[nodiscard]] uint64_t as_uconstant() const;
 
   /**
    * Return this value as a signed constant.  This automatically
    * coerces "constant" type values by interpreting their bytes
    * as twos-complement signed values.
    */
-  int64_t as_sconstant() const;
+  [[nodiscard]] int64_t as_sconstant() const;
 
   /**
    * Return this value as an expression.  This automatically
@@ -614,33 +616,33 @@ class value {
    * always encoded as blocks, though the library automatically
    * distinguishes these types based on context).
    */
-  expr as_exprloc() const;
+  [[nodiscard]] expr as_exprloc() const;
 
   /**
    * Return this value as a boolean flag.
    */
-  bool as_flag() const;
+  [[nodiscard]] bool as_flag() const;
 
   // XXX macptr
 
-  loclist as_loclist() const;
+  [[nodiscard]] loclist as_loclist() const;
 
   /**
    * Return this value as a rangelist.
    */
-  rangelist as_rangelist() const;
+  [[nodiscard]] rangelist as_rangelist() const;
 
   /**
    * For a reference type value, return the referenced DIE.
    * This DIE may be in a different compilation unit or could
    * be a DIE in a type unit.
    */
-  die as_reference() const;
+  [[nodiscard]] die as_reference() const;
 
   /**
    * Return this value as a string.
    */
-  std::string as_string() const;
+  [[nodiscard]] std::string as_string() const;
 
   /**
    * Fill the given string buffer with the string value of this
@@ -662,7 +664,7 @@ class value {
    * Return this value as a section offset.  This is applicable
    * to lineptr, loclistptr, macptr, and rangelistptr.
    */
-  section_offset as_sec_offset() const;
+  [[nodiscard]] section_offset as_sec_offset() const;
 
  private:
   friend class die;
@@ -675,7 +677,7 @@ class value {
   const unit *cu;
   DW_FORM form;
   type typ;
-  section_offset offset;
+  section_offset offset{};
 };
 
 std::string to_string(value::type v);
@@ -745,7 +747,7 @@ class expr {
  */
 class expr_context {
  public:
-  virtual ~expr_context() {}
+  virtual ~expr_context() = default;
 
   /**
    * Return the value stored in register regnum.  This is used
@@ -901,7 +903,7 @@ class rangelist {
    * Construct a range list from a sequence of {low, high}
    * pairs.
    */
-  rangelist(const std::initializer_list<std::pair<taddr, taddr> > &ranges);
+  rangelist(const std::initializer_list<std::pair<taddr, taddr>> &ranges);
 
   /**
    * Construct an empty range list.
@@ -927,7 +929,7 @@ class rangelist {
    * you need to store a range for more than one loop iteration,
    * you must copy it.
    */
-  iterator begin() const;
+  [[nodiscard]] iterator begin() const;
 
   /**
    * Return an iterator to one past the last entry in this range
@@ -938,12 +940,12 @@ class rangelist {
   /**
    * Return true if this range list contains the given address.
    */
-  bool contains(taddr addr) const;
+  [[nodiscard]] bool contains(taddr addr) const;
 
  private:
   std::vector<taddr> synthetic;
   std::shared_ptr<section> sec;
-  taddr base_addr;
+  taddr base_addr{};
 };
 
 /**
@@ -956,7 +958,9 @@ class rangelist::entry {
   /**
    * Return true if addr is within this entry's bounds.
    */
-  bool contains(taddr addr) const { return low <= addr && addr < high; }
+  [[nodiscard]] bool contains(taddr addr) const {
+    return low <= addr && addr < high;
+  }
 };
 
 /**
@@ -1012,7 +1016,7 @@ class rangelist::iterator {
   std::shared_ptr<section> sec;
   taddr base_addr;
   section_offset pos;
-  rangelist::entry entry;
+  rangelist::entry entry{};
 };
 
 //////////////////////////////////////////////////////////////////
@@ -1060,7 +1064,7 @@ class line_table {
    * Return true if this object represents an initialized line
    * table.  Default constructed line tables are not valid.
    */
-  bool valid() const { return !!m; }
+  [[nodiscard]] bool valid() const { return !!m; }
 
   class file;
   class entry;
@@ -1073,13 +1077,13 @@ class line_table {
    * table.  If called on an invalid line table, this will
    * return an iterator equal to end().
    */
-  iterator begin() const;
+  [[nodiscard]] iterator begin() const;
 
   /**
    * Return an iterator to one past the last entry in this line
    * number table.
    */
-  iterator end() const;
+  [[nodiscard]] iterator end() const;
 
   /**
    * Return an iterator to the line table entry containing addr
@@ -1087,14 +1091,14 @@ class line_table {
    * equal to addr, but accounting for end_sequence entries).
    * Returns end() if there is no such entry.
    */
-  iterator find_address(taddr addr) const;
+  [[nodiscard]] iterator find_address(taddr addr) const;
 
   /**
    * Return the index'th file in the line table.  These indexes
    * are typically used by declaration and call coordinates.  If
    * index is out of range, throws out_of_range.
    */
-  const file *get_file(unsigned index) const;
+  [[nodiscard]] const file *get_file(unsigned index) const;
 
  private:
   friend class iterator;
@@ -1127,7 +1131,7 @@ class line_table::file {
   /**
    * Construct a source file object.
    */
-  file(std::string path = "", uint64_t mtime = 0, uint64_t length = 0);
+  explicit file(std::string path = "", uint64_t mtime = 0, uint64_t length = 0);
 };
 
 /**
@@ -1227,7 +1231,7 @@ class line_table::entry {
    * Return a descriptive string of the form
    * "filename[:line[:column]]".
    */
-  std::string get_description() const;
+  [[nodiscard]] std::string get_description() const;
 };
 
 /**
@@ -1274,7 +1278,7 @@ class line_table::iterator {
   iterator &operator++();
 
   /** Post-increment operator */
-  iterator operator++(int) {
+  const iterator operator++(int) {
     iterator tmp(*this);
     ++(*this);
     return tmp;
@@ -1388,7 +1392,7 @@ class die_str_map {
   die_str_map(const die &parent, DW_AT attr,
               const std::initializer_list<DW_TAG> &accept);
 
-  die_str_map() = default;
+  die_str_map() = delete;
   die_str_map(const die_str_map &o) = default;
   die_str_map(die_str_map &&o) = default;
 
@@ -1444,9 +1448,9 @@ class elf_loader : public loader {
   Elf f;
 
  public:
-  elf_loader(const Elf &file) : f(file) {}
+  explicit elf_loader(const Elf &file) : f(file) {}
 
-  const void *load(section_type section, size_t *size_out) {
+  const void *load(section_type section, size_t *size_out) override {
     auto sec = f.get_section(section_type_to_name(section));
     if (!sec.valid()) return nullptr;
     *size_out = sec.size();
@@ -1461,8 +1465,8 @@ class elf_loader : public loader {
  * reasonably be used with elf::elf from libelf++.
  */
 template <typename Elf>
-std::shared_ptr<elf_loader<Elf> > create_loader(const Elf &f) {
-  return std::make_shared<elf_loader<Elf> >(f);
+std::shared_ptr<elf_loader<Elf>> create_loader(const Elf &f) {
+  return std::make_shared<elf_loader<Elf>>(f);
 }
 };  // namespace elf
 

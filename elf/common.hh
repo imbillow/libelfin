@@ -2,8 +2,8 @@
 // Use of this source code is governed by an MIT license
 // that can be found in the LICENSE file.
 
-#ifndef _ELFPP_COMMON_HH_
-#define _ELFPP_COMMON_HH_
+#ifndef ELFPP_COMMON_HH_
+#define ELFPP_COMMON_HH_
 
 #define ELFPP_BEGIN_NAMESPACE namespace elf {
 #define ELFPP_END_NAMESPACE }
@@ -53,7 +53,7 @@ T swizzle(T v, byte_order from, byte_order to) {
     case 1:
       return v;
     case 2: {
-      std::uint16_t x = (std::uint16_t)v;
+      auto x = (std::uint16_t)v;
       return (T)(((x & 0xFF) << 8) | (x >> 8));
     }
     case 4:

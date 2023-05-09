@@ -2,8 +2,8 @@
 // Use of this source code is governed by an MIT license
 // that can be found in the LICENSE file.
 
-#ifndef _DWARFPP_SMALL_VECTOR_HH_
-#define _DWARFPP_SMALL_VECTOR_HH_
+#ifndef DWARFPP_SMALL_VECTOR_HH_
+#define DWARFPP_SMALL_VECTOR_HH_
 
 DWARFPP_BEGIN_NAMESPACE
 
@@ -26,7 +26,7 @@ class small_vector {
     *this = o;
   }
 
-  small_vector(small_vector<T, Min> &&o)
+  small_vector(small_vector<T, Min> &&o) noexcept
       : base((T *)buf), end(base), cap((T *)&buf[sizeof(T[Min])]) {
     if ((char *)o.base == o.buf) {
       // Elements are inline; have to copy them
@@ -62,9 +62,9 @@ class small_vector {
     return *this;
   }
 
-  size_type size() const { return end - base; }
+  [[nodiscard]] size_type size() const { return end - base; }
 
-  bool empty() const { return base == end; }
+  [[nodiscard]] bool empty() const { return base == end; }
 
   void reserve(size_type n) {
     if (n <= (size_type)(cap - base)) return;
@@ -73,7 +73,7 @@ class small_vector {
     if (target == 0) target = 1;
     while (target < n) target <<= 1;
 
-    char *newbuf = new char[sizeof(T[target])];
+    char *newbuf = new char[sizeof(T) * target];
     T *src = base, *dest = (T *)newbuf;
     for (; src < end; src++, dest++) {
       new (dest) T(*src);
@@ -132,7 +132,7 @@ class small_vector {
   }
 
  private:
-  char buf[sizeof(T[Min])];
+  char buf[sizeof(T[Min])]{};
   T *base, *end, *cap;
 };
 

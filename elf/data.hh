@@ -2,8 +2,8 @@
 // Use of this source code is governed by an MIT license
 // that can be found in the LICENSE file.
 
-#ifndef _ELFPP_DATA_HH_
-#define _ELFPP_DATA_HH_
+#ifndef ELFPP_DATA_HH_
+#define ELFPP_DATA_HH_
 
 #include <cstdint>
 #include <cstring>
@@ -453,11 +453,11 @@ struct Sym<Elf32, Order> {
     shnxd = swizzle(o.shnxd, o.order, order);
   }
 
-  stb binding() const { return (stb)(info >> 4); }
+  [[nodiscard]] stb binding() const { return (stb)(info >> 4); }
 
   void set_binding(stb v) { info = (info & 0x0F) | ((unsigned char)v << 4); }
 
-  stt type() const { return (stt)(info & 0xF); }
+  [[nodiscard]] stt type() const { return (stt)(info & 0xF); }
 
   void set_type(stt v) { info = (info & 0xF0) | (unsigned char)v; }
 };
@@ -484,11 +484,11 @@ struct Sym<Elf64, Order> {
     shnxd = swizzle(o.shnxd, o.order, order);
   }
 
-  stb binding() const { return (stb)(info >> 4); }
+  [[nodiscard]] stb binding() const { return (stb)(info >> 4); }
 
   void set_binding(stb v) { info = (info & 0xF) | ((unsigned char)v << 4); }
 
-  stt type() const { return (stt)(info & 0xF); }
+  [[nodiscard]] stt type() const { return (stt)(info & 0xF); }
 
   void set_type(stt v) { info = (info & 0xF0) | (unsigned char)v; }
 };

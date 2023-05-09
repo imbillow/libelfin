@@ -2,8 +2,8 @@
 // Use of this source code is governed by an MIT license
 // that can be found in the LICENSE file.
 
-#ifndef _ELFPP_HH_
-#define _ELFPP_HH_
+#ifndef ELFPP_HH_
+#define ELFPP_HH_
 
 #include <cstddef>
 #include <memory>
@@ -67,46 +67,46 @@ class elf {
 
   elf &operator=(const elf &o) = default;
 
-  bool valid() const { return !!m; }
+  [[nodiscard]] bool valid() const { return !!m; }
 
   /**
    * Return the ELF file header in canonical form (ELF64 in
    * native byte order).
    */
-  const Ehdr<> &get_hdr() const;
+  [[nodiscard]] const Ehdr<> &get_hdr() const;
 
   /**
    * Return the loader used by this file.
    */
-  std::shared_ptr<loader> get_loader() const;
+  [[nodiscard]] std::shared_ptr<loader> get_loader() const;
 
   /**
    * Return the segments in this file.
    */
-  const std::vector<segment> &segments() const;
+  [[nodiscard]] const std::vector<segment> &segments() const;
 
   /**
    * Return the segment at the given index. If no such segment
    * is found, return an invalid segment.
    */
-  const segment &get_segment(unsigned index) const;
+  [[nodiscard]] const segment &get_segment(unsigned index) const;
 
   /**
    * Return the sections in this file.
    */
-  const std::vector<section> &sections() const;
+  [[nodiscard]] const std::vector<section> &sections() const;
 
   /**
    * Return the section with the specified name. If no such
    * section is found, return an invalid section.
    */
-  const section &get_section(const std::string &name) const;
+  [[nodiscard]] const section &get_section(const std::string &name) const;
 
   /**
    * Return the section at the given index.  If no such section
    * is found, return an invalid section.
    */
-  const section &get_section(unsigned index) const;
+  [[nodiscard]] const section &get_section(unsigned index) const;
 
  private:
   struct impl;
@@ -118,7 +118,7 @@ class elf {
  */
 class loader {
  public:
-  virtual ~loader() {}
+  virtual ~loader() = default;
 
   /**
    * Load the requested file section into memory and return a
@@ -161,7 +161,7 @@ class segment {
    * methods other than operator= and valid on this results in
    * undefined behavior.
    */
-  segment() {}
+  segment() = default;
 
   segment(const elf &f, const void *hdr);
   segment(const segment &o) = default;
@@ -171,30 +171,30 @@ class segment {
    * Return true if this segment is valid and corresponds to a
    * segment in the ELF file.
    */
-  bool valid() const { return !!m; }
+  [[nodiscard]] bool valid() const { return !!m; }
 
   /**
    * Return the ELF section header in canonical form (ELF64 in
    * native byte order).
    */
-  const Phdr<> &get_hdr() const;
+  [[nodiscard]] const Phdr<> &get_hdr() const;
 
   /**
    * Return this segment's data. The returned buffer will
    * be file_size() bytes long.
    */
-  const void *data() const;
+  [[nodiscard]] const void *data() const;
 
   /**
    * Return the on disk size of this segment in bytes.
    */
-  size_t file_size() const;
+  [[nodiscard]] size_t file_size() const;
 
   /**
    * Return the in-memory size of this segment in bytes.
    * Bytes between file_size() and mem_size() are implicitly zeroes.
    */
-  size_t mem_size() const;
+  [[nodiscard]] size_t mem_size() const;
 
  private:
   struct impl;
@@ -214,7 +214,7 @@ class section {
    * methods other than operator= and valid on this results in
    * undefined behavior.
    */
-  section() {}
+  section() = default;
 
   section(const elf &f, const void *hdr);
   section(const section &o) = default;
@@ -224,13 +224,13 @@ class section {
    * Return true if this section is valid and corresponds to a
    * section in the ELF file.
    */
-  bool valid() const { return !!m; }
+  [[nodiscard]] bool valid() const { return !!m; }
 
   /**
    * Return the ELF section header in canonical form (ELF64 in
    * native byte order).
    */
-  const Shdr<> &get_hdr() const;
+  [[nodiscard]] const Shdr<> &get_hdr() const;
 
   /**
    * Return this section's name.
@@ -240,31 +240,31 @@ class section {
    * Return this section's name.  The returned string copies its
    * data, so loader liveness requirements don't apply.
    */
-  std::string get_name() const;
+  [[nodiscard]] std::string get_name() const;
 
   /**
    * Return this section's data.  If this is a NOBITS section,
    * return nullptr.
    */
-  const void *data() const;
+  [[nodiscard]] const void *data() const;
   /**
    * Return the size of this section in bytes.
    */
-  size_t size() const;
+  [[nodiscard]] size_t size() const;
 
   /**
    * Return this section as a strtab.  Throws
    * section_type_mismatch if this section is not a string
    * table.
    */
-  strtab as_strtab() const;
+  [[nodiscard]] strtab as_strtab() const;
 
   /**
    * Return this section as a symtab.  Throws
    * section_type_mismatch if this section is not a symbol
    * table.
    */
-  symtab as_symtab() const;
+  [[nodiscard]] symtab as_symtab() const;
 
  private:
   struct impl;
@@ -287,7 +287,7 @@ class strtab {
   strtab() = default;
   strtab(const elf &f, const void *data, size_t size);
 
-  bool valid() const { return !!m; }
+  [[nodiscard]] bool valid() const { return !!m; }
 
   /**
    * Return the string at the given offset in this string table.
@@ -300,7 +300,7 @@ class strtab {
   /**
    * Return the string at the given offset in this string table.
    */
-  std::string get(Elf64::Off offset) const;
+  [[nodiscard]] std::string get(Elf64::Off offset) const;
 
  private:
   struct impl;
@@ -320,7 +320,7 @@ class sym {
   /**
    * Return this symbol's raw data.
    */
-  const Sym<> &get_data() const { return data; }
+  [[nodiscard]] const Sym<> &get_data() const { return data; }
 
   /**
    * Return this symbol's name.
@@ -334,7 +334,7 @@ class sym {
   /**
    * Return this symbol's name as a string.
    */
-  std::string get_name() const;
+  [[nodiscard]] std::string get_name() const;
 };
 
 /**
@@ -353,7 +353,7 @@ class symtab {
   symtab() = default;
   symtab(const elf &f, const void *data, size_t size, const strtab &strs);
 
-  bool valid() const { return !!m; }
+  [[nodiscard]] bool valid() const { return !!m; }
 
   class iterator {
     const elf f;
@@ -369,7 +369,7 @@ class symtab {
 
     iterator &operator++() { return *this += 1; }
 
-    iterator operator++(int) {
+    const iterator operator++(int) {
       iterator cur(*this);
       *this += 1;
       return cur;
@@ -393,12 +393,12 @@ class symtab {
   /**
    * Return an iterator to the first symbol.
    */
-  iterator begin() const;
+  [[nodiscard]] iterator begin() const;
 
   /**
    * Return an iterator just past the last symbol.
    */
-  iterator end() const;
+  [[nodiscard]] iterator end() const;
 
  private:
   struct impl;

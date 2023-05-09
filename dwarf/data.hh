@@ -2,8 +2,8 @@
 // Use of this source code is governed by an MIT license
 // that can be found in the LICENSE file.
 
-#ifndef _DWARFPP_DW_HH_
-#define _DWARFPP_DW_HH_
+#ifndef DWARFPP_DW_HH_
+#define DWARFPP_DW_HH_
 
 #include <cstdint>
 #include <string>
@@ -108,25 +108,25 @@ std::string to_string(DW_CHILDREN v);
 // and explicit have a trailing underscore because they are reserved
 // words.
 enum class DW_AT {
-  sibling = 0x01,           // reference
-  location = 0x02,          // exprloc, loclistptr
-  name = 0x03,              // string
-  ordering = 0x09,          // constant
-  byte_size = 0x0b,         // constant, exprloc, reference
-  bit_offset = 0x0c,        // constant, exprloc, reference
-  bit_size = 0x0d,          // constant, exprloc, reference
-  stmt_list = 0x10,         // lineptr
-  low_pc = 0x11,            // address
-  high_pc = 0x12,           // address, constant
-  language = 0x13,          // constant
-  discr = 0x15,             // reference
-  discr_value = 0x16,       // constant
-  visibility = 0x17,        // constant
-  import = 0x18,            // reference
-  string_length = 0x19,     // exprloc, loclistptr
-  common_reference = 0x1a,  // reference
-  comp_dir = 0x1b,          // string
-  const_value = 0x1c,       // block, constant, string
+  sibling = 0x01,               // reference
+  location = 0x02,              // exprloc, loclistptr
+  name = 0x03,                  // string
+  ordering = 0x09,              // constant
+  byte_size = 0x0b,             // constant, exprloc, reference
+  bit_offset = 0x0c,            // constant, exprloc, reference
+  bit_size = 0x0d,              // constant, exprloc, reference
+  stmt_list = 0x10,             // lineptr
+  low_pc = 0x11,                // address
+  high_pc = 0x12,               // address, constant
+  language = 0x13,              // constant
+  discr = 0x15,                 // reference
+  discr_value = 0x16,           // constant
+  visibility = 0x17,            // constant
+  import = 0x18,                // reference
+  string_length = 0x19,         // exprloc, loclistptr
+  common_reference = 0x1a,      // reference
+  comp_dir = 0x1b,              // string
+  const_value = 0x1c,           // block, constant, string
 
   containing_type = 0x1d,       // reference
   default_value = 0x1e,         // reference
@@ -216,25 +216,25 @@ std::string to_string(DW_AT v);
 
 // Attribute form encodings (Section 7, figure 21)
 enum class DW_FORM {
-  addr = 0x01,      // address
-  block2 = 0x03,    // block
-  block4 = 0x04,    // block
-  data2 = 0x05,     // constant
-  data4 = 0x06,     // constant
-  data8 = 0x07,     // constant
-  string = 0x08,    // string
-  block = 0x09,     // block
-  block1 = 0x0a,    // block
-  data1 = 0x0b,     // constant
-  flag = 0x0c,      // flag
-  sdata = 0x0d,     // constant
-  strp = 0x0e,      // string
-  udata = 0x0f,     // constant
-  ref_addr = 0x10,  // reference
-  ref1 = 0x11,      // reference
-  ref2 = 0x12,      // reference
-  ref4 = 0x13,      // reference
-  ref8 = 0x14,      // reference
+  addr = 0x01,       // address
+  block2 = 0x03,     // block
+  block4 = 0x04,     // block
+  data2 = 0x05,      // constant
+  data4 = 0x06,      // constant
+  data8 = 0x07,      // constant
+  string = 0x08,     // string
+  block = 0x09,      // block
+  block1 = 0x0a,     // block
+  data1 = 0x0b,      // constant
+  flag = 0x0c,       // flag
+  sdata = 0x0d,      // constant
+  strp = 0x0e,       // string
+  udata = 0x0f,      // constant
+  ref_addr = 0x10,   // reference
+  ref1 = 0x11,       // reference
+  ref2 = 0x12,       // reference
+  ref4 = 0x13,       // reference
+  ref8 = 0x14,       // reference
 
   ref_udata = 0x15,  // reference
   indirect = 0x16,   // (Section 7.5.3)
@@ -244,6 +244,27 @@ enum class DW_FORM {
   exprloc = 0x18,       // exprloc
   flag_present = 0x19,  // flag
   ref_sig8 = 0x20,      // reference
+
+  /// DWARF 5
+  strx = 0x1a,            ///< string
+  addrx = 0x1b,           ///< address
+  ref_sup4 = 0x1c,        ///< reference
+  strp_sup = 0x1d,        ///< string
+  data16 = 0x1e,          ///< constant
+  line_strp = 0x1f,       ///< string
+
+  implicit_const = 0x21,  ///< reference
+  loclistx = 0x22,        ///< loclist
+  rnglistx = 0x23,        ///< rnglist
+  ref_sup8 = 0x24,        ///< reference
+  strx1 = 0x25,           ///< string
+  strx2 = 0x26,           ///< string
+  strx3 = 0x27,           ///< string
+  strx4 = 0x28,           ///< string
+  addrx1 = 0x29,          ///< address
+  addrx2 = 0x2a,          ///< address
+  addrx3 = 0x2b,          ///< address
+  addrx4 = 0x2c,          ///< address
 };
 
 std::string to_string(DW_FORM v);
@@ -304,8 +325,8 @@ enum class DW_OP : ubyte {
   reg31 = 0x6f,
 
   // Base register 0..31 = (breg0 + regnum)
-  breg0 = 0x70,   // [SLEB128 offset]
-  breg31 = 0x8f,  // [SLEB128 offset]
+  breg0 = 0x70,        // [SLEB128 offset]
+  breg31 = 0x8f,       // [SLEB128 offset]
 
   regx = 0x90,         // [ULEB128 register]
   fbreg = 0x91,        // [SLEB128 offset]
@@ -412,21 +433,21 @@ std::string to_string(DW_VIRTUALITY v);
 
 // DW_AT::language constants (DWARF4 section 7.12 figure 31)
 enum class DW_LANG {
-  C89 = 0x0001,          // Lower bound 0
-  C = 0x0002,            // Lower bound 0
-  Ada83 = 0x0003,        // Lower bound 1
-  C_plus_plus = 0x0004,  // Lower bound 0
-  Cobol74 = 0x0005,      // Lower bound 1
-  Cobol85 = 0x0006,      // Lower bound 1
-  Fortran77 = 0x0007,    // Lower bound 1
-  Fortran90 = 0x0008,    // Lower bound 1
-  Pascal83 = 0x0009,     // Lower bound 1
-  Modula2 = 0x000a,      // Lower bound 1
-  Java = 0x000b,         // Lower bound 0
-  C99 = 0x000c,          // Lower bound 0
-  Ada95 = 0x000d,        // Lower bound 1
-  Fortran95 = 0x000e,    // Lower bound 1
-  PLI = 0x000f,          // Lower bound 1
+  C89 = 0x0001,             // Lower bound 0
+  C = 0x0002,               // Lower bound 0
+  Ada83 = 0x0003,           // Lower bound 1
+  C_plus_plus = 0x0004,     // Lower bound 0
+  Cobol74 = 0x0005,         // Lower bound 1
+  Cobol85 = 0x0006,         // Lower bound 1
+  Fortran77 = 0x0007,       // Lower bound 1
+  Fortran90 = 0x0008,       // Lower bound 1
+  Pascal83 = 0x0009,        // Lower bound 1
+  Modula2 = 0x000a,         // Lower bound 1
+  Java = 0x000b,            // Lower bound 0
+  C99 = 0x000c,             // Lower bound 0
+  Ada95 = 0x000d,           // Lower bound 1
+  Fortran95 = 0x000e,       // Lower bound 1
+  PLI = 0x000f,             // Lower bound 1
 
   ObjC = 0x0010,            // Lower bound 0
   ObjC_plus_plus = 0x0011,  // Lower bound 0

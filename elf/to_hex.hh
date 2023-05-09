@@ -2,8 +2,8 @@
 // Use of this source code is governed by an MIT license
 // that can be found in the LICENSE file.
 
-#ifndef _ELFPP_TO_HEX_HH_
-#define _ELFPP_TO_HEX_HH_
+#ifndef ELFPP_TO_HEX_HH_
+#define ELFPP_TO_HEX_HH_
 
 #include <string>
 #include <type_traits>
@@ -12,7 +12,7 @@ template <typename T>
 std::string to_hex(T v) {
   static_assert(std::is_integral<T>::value,
                 "to_hex applied to non-integral type");
-  if (v == 0) return std::string("0");
+  if (v == 0) return {"0"};
   char buf[sizeof(T) * 2 + 1];
   char *pos = &buf[sizeof(buf) - 1];
   *pos-- = '\0';
@@ -25,7 +25,7 @@ std::string to_hex(T v) {
     pos--;
     v >>= 4;
   }
-  return std::string(pos + 1);
+  return {pos + 1};
 }
 
-#endif  // _ELFPP_TO_HEX_HH_
+#endif  // ELFPP_TO_HEX_HH_

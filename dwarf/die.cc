@@ -2,6 +2,10 @@
 // Use of this source code is governed by an MIT license
 // that can be found in the LICENSE file.
 
+#include <algorithm>
+#include <ranges>
+
+#include "dwarf++.hh"
 #include "internal.hh"
 
 using namespace std;

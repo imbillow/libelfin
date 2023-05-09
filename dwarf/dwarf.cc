@@ -31,12 +31,13 @@ struct dwarf::impl {
   std::map<section_type, std::shared_ptr<section>> sections;
 };
 
-dwarf::dwarf(const std::shared_ptr<loader> &l) : m(make_shared<impl>(l)) {
+dwarf::dwarf(const std::shared_ptr<loader> &_loader)
+    : m(make_shared<impl>(_loader)) {
   const void *data;
   size_t size;
 
   // Get required sections
-  data = l->load(section_type::info, &size);
+  data = _loader->load(section_type::info, &size);
   if (!data) throw format_error("required .debug_info section missing");
   m->sec_info =
       make_shared<section>(section_type::info, data, size, byte_order::lsb);
@@ -55,7 +56,7 @@ dwarf::dwarf(const std::shared_ptr<loader> &l) : m(make_shared<impl>(l)) {
         make_shared<section>(section_type::info, data, size, byte_order::msb);
   }
 
-  data = l->load(section_type::abbrev, &size);
+  data = _loader->load(section_type::abbrev, &size);
   if (!data) throw format_error("required .debug_abbrev section missing");
   m->sec_abbrev =
       make_shared<section>(section_type::abbrev, data, size, m->sec_info->ord);
@@ -215,8 +216,7 @@ void unit::impl::force_abbrevs() {
   if (highest * 10 < abbrevs_map.size() * 15) {
     // Move the map into the vector
     abbrevs_vec.resize(highest + 1);
-    for (auto &entry : abbrevs_map)
-      abbrevs_vec[entry.first] = std::move(entry.second);
+    for (auto &[k, v] : abbrevs_map) abbrevs_vec[k] = std::move(v);
     abbrevs_map.clear();
   }
 
@@ -238,9 +238,14 @@ compilation_unit::compilation_unit(const dwarf &file, section_offset offset) {
     throw format_error("unknown compilation unit version " +
                        std::to_string(version));
   // .debug_abbrev-relative offset of this unit's abbrevs
-  section_offset debug_abbrev_offset = sub.offset();
-  auto address_size = sub.fixed<ubyte>();
-  subsec->addr_size = address_size;
+  section_offset debug_abbrev_offset{};
+  if (version == 5) {
+    subsec->addr_size = sub.fixed<ubyte>();
+    debug_abbrev_offset = sub.offset();
+  } else {
+    debug_abbrev_offset = sub.offset();
+    subsec->addr_size = sub.fixed<ubyte>();
+  }
 
   m = make_shared<impl>(file, offset, subsec, debug_abbrev_offset,
                         sub.get_section_offset());

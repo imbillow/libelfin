@@ -2,8 +2,8 @@
 // Use of this source code is governed by an MIT license
 // that can be found in the LICENSE file.
 
-#ifndef _DWARFPP_INTERNAL_HH_
-#define _DWARFPP_INTERNAL_HH_
+#ifndef DWARFPP_INTERNAL_HH_
+#define DWARFPP_INTERNAL_HH_
 
 #include <stdexcept>
 #include <type_traits>
@@ -55,14 +55,14 @@ struct section {
   section(const section &o) = default;
 
   std::shared_ptr<section> slice(section_offset start, section_length len,
-                                 format fmt = format::unknown,
-                                 unsigned addr_size = 0) {
-    if (fmt == format::unknown) fmt = this->fmt;
-    if (addr_size == 0) addr_size = this->addr_size;
+                                 format _fmt = format::unknown,
+                                 unsigned _addr_size = 0) {
+    if (_fmt == format::unknown) _fmt = this->fmt;
+    if (_addr_size == 0) _addr_size = this->addr_size;
 
     return std::make_shared<section>(
         type, begin + start, std::min(len, (section_length)(end - begin)), ord,
-        fmt, addr_size);
+        _fmt, _addr_size);
   }
 
   [[nodiscard]] size_t size() const { return end - begin; }
@@ -83,7 +83,8 @@ struct cursor {
   const char *pos;
 
   cursor() : pos(nullptr) {}
-  cursor(const std::shared_ptr<section> sec, section_offset offset = 0)
+  explicit cursor(const std::shared_ptr<section> &sec,
+                  section_offset offset = 0)
       : sec(sec), pos(sec->begin + offset) {}
 
   /**
@@ -95,6 +96,13 @@ struct cursor {
    * skip_initial_length).
    */
   std::shared_ptr<section> subsection();
+  /**
+   * Integers may be encoded using “Little-Endian Base 128” (LEB128) numbers.
+   * LEB128 is a scheme for encoding integers densely that exploits the
+   * assumption that most integers are small in magnitude.
+   *
+   * The encoding for signed, two’s complement LEB128 (SLEB128) numbers.
+   */
   std::int64_t sleb128();
   section_offset offset();
   void string(std::string &out);
@@ -110,7 +118,7 @@ struct cursor {
     ensure(sizeof(T));
     static_assert(sizeof(T) <= 8, "T too big");
     uint64_t val = 0;
-    const unsigned char *p = (const unsigned char *)pos;
+    const auto *p = (const unsigned char *)pos;
     if (sec->ord == byte_order::lsb) {
       for (unsigned i = 0; i < sizeof(T); i++)
         val |= ((uint64_t)p[i]) << (i * 8);
@@ -122,6 +130,11 @@ struct cursor {
     return (T)val;
   }
 
+  /**
+   * Integers may be encoded using “Little-Endian Base 128” (LEB128) numbers.
+   * LEB128 is a scheme for encoding integers densely that exploits the
+   * assumption that most integers are small in magnitude.
+   */
   std::uint64_t uleb128() {
     // Appendix C
     // XXX Pre-compute all two byte ULEB's
@@ -162,20 +175,20 @@ struct cursor {
     return *this;
   }
 
-  cursor operator+(section_offset offset) const {
-    return cursor(sec, pos + offset);
-  }
+  cursor operator+(section_offset offset) const { return {sec, pos + offset}; }
 
   bool operator<(const cursor &o) const { return pos < o.pos; }
 
-  bool end() const { return pos >= sec->end; }
+  [[nodiscard]] bool end() const { return pos >= sec->end; }
 
-  bool valid() const { return !!pos; }
+  [[nodiscard]] bool valid() const { return pos != nullptr; }
 
-  section_offset get_section_offset() const { return pos - sec->begin; }
+  [[nodiscard]] section_offset get_section_offset() const {
+    return pos - sec->begin;
+  }
 
  private:
-  cursor(const std::shared_ptr<section> sec, const char *pos)
+  cursor(const std::shared_ptr<section> &sec, const char *pos)
       : sec(sec), pos(pos) {}
 
   static void underflow();
@@ -201,8 +214,8 @@ typedef std::uint64_t abbrev_code;
  */
 struct abbrev_entry {
   abbrev_code code;
-  DW_TAG tag;
-  bool children;
+  DW_TAG tag{};
+  bool children{};
   std::vector<attribute_spec> attributes;
 
   abbrev_entry() : code(0) {}
@@ -214,9 +227,9 @@ struct abbrev_entry {
  * A section header in .debug_pubnames or .debug_pubtypes.
  */
 struct name_unit {
-  uhalf version;
-  section_offset debug_info_offset;
-  section_length debug_info_length;
+  uhalf version{};
+  section_offset debug_info_offset{};
+  section_length debug_info_length{};
   // Cursor to the first name_entry in this unit.  This cursor's
   // section is limited to this unit.
   cursor entries;
