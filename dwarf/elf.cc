@@ -47,13 +47,13 @@ static const struct {
 };
 
 bool elf::section_name_to_type(const char *name, section_type *out) {
-  for (auto &sec : sections) {
-    if (strcmp(sec.name, name) == 0) {
-      *out = sec.type;
+  return std::ranges::any_of(sections, [out, name](auto &x) {
+    if (strcmp(x.name, name) == 0) {
+      *out = x.type;
       return true;
     }
-  }
-  return false;
+    return false;
+  });
 }
 
 const char *elf::section_type_to_name(section_type type) {

@@ -49,9 +49,8 @@ void die::read(section_offset off) {
 bool die::has(DW_AT attr) const {
   if (!abbrev) return false;
   // XXX Totally lame
-  for (auto &a : abbrev->attributes)
-    if (a.name == attr) return true;
-  return false;
+  return std::ranges::any_of(abbrev->attributes,
+                             [attr](auto &x) { return x.name == attr; });
 }
 
 value die::operator[](DW_AT attr) const {

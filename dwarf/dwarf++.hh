@@ -10,6 +10,7 @@
 #define DWARFPP_END_NAMESPACE }
 #endif
 
+#include <algorithm>
 #include <initializer_list>
 #include <map>
 #include <memory>
