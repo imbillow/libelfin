@@ -2,8 +2,9 @@
 // Use of this source code is governed by an MIT license
 // that can be found in the LICENSE file.
 
-#include "internal.hh"
+#include <iostream>
 
+#include "internal.hh"
 using namespace std;
 
 DWARFPP_BEGIN_NAMESPACE
@@ -146,11 +147,15 @@ static value::type resolve_type(DW_AT name, DW_FORM form) {
 attribute_spec::attribute_spec(DW_AT name, DW_FORM form)
     : name(name), form(form), type(resolve_type(name, form)) {}
 
-bool abbrev_entry::read(cursor *cur) {
+bool abbrev_entry::read(cursor* cur) {
   attributes.clear();
 
   // Section 7.5.3
-  code = cur->uleb128();
+  try {
+    code = cur->uleb128();
+  } catch (underflow_error& e) {
+    cout << "underflow when parse abbrev_entry uleb128\n" << e.what() << endl;
+  }
   if (!code) return false;
 
   tag = (DW_TAG)cur->uleb128();
