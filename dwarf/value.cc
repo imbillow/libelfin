@@ -128,6 +128,11 @@ bool value::as_flag() const {
     default:
       throw value_type_mismatch("cannot read " + to_string(typ) + " as flag");
   }
+loclist
+value::as_loclist() const
+{
+        cursor cur(cu->data(), offset);
+        return loclist(cu, cur.get_section_offset());
 }
 
 rangelist value::as_rangelist() const {

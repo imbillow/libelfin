@@ -123,10 +123,6 @@ expr_result expr::evaluate(
         stack.push_back(cur.sleb128());
         break;
 
-        // 2.5.1.2 Register based addressing
-      case DW_OP::fbreg:
-        // XXX
-        throw runtime_error("DW_OP_fbreg not implemented");
       case DW_OP::breg0... DW_OP::breg31:
         tmp1.u = (unsigned)op - (unsigned)DW_OP::breg0;
         tmp2.s = cur.sleb128();
@@ -137,6 +133,57 @@ expr_result expr::evaluate(
         tmp2.s = cur.sleb128();
         stack.push_back((int64_t)ctx->reg(tmp1.u) + tmp2.s);
         break;
+                        // 2.5.1.2 Register based addressing
+                case DW_OP::fbreg:
+                {
+                    for (const auto& die : cu->root()) {
+                        bool found = false;
+                        if (die.contains_section_offset(offset)) {
+                            auto frame_base_at = die[DW_AT::frame_base];
+                            expr_result frame_base{};
+
+                            if (frame_base_at.get_type() == value::type::loclist) {
+                                auto loclist = frame_base_at.as_loclist();
+                                frame_base = loclist.evaluate(ctx);
+                            }
+                            else if (frame_base_at.get_type() == value::type::exprloc) {
+                                auto expr = frame_base_at.as_exprloc();
+                                frame_base = expr.evaluate(ctx);
+                            }
+
+                            switch (frame_base.location_type) {
+                            case expr_result::type::reg:
+                                tmp1.u = (unsigned)frame_base.value;
+                                tmp2.s = cur.sleb128();
+                                stack.push_back((int64_t)ctx->reg(tmp1.u) + tmp2.s);
+                                found = true;
+                                break;
+                            case expr_result::type::address:
+                                tmp1.u = frame_base.value;
+                                tmp2.s = cur.sleb128();
+                                stack.push_back(tmp1.u + tmp2.s);
+                                found = true;
+                                break;
+                            case expr_result::type::literal:
+                            case expr_result::type::implicit:
+                            case expr_result::type::empty:
+                                throw expr_error("Unhandled frame base type for DW_OP_fbreg");
+                            }
+                        }
+                        if (found) break;
+                    }
+                    break;
+                }
+                case DW_OP::breg0...DW_OP::breg31:
+                        tmp1.u = (unsigned)op - (unsigned)DW_OP::breg0;
+                        tmp2.s = cur.sleb128();
+                        stack.push_back((int64_t)ctx->reg(tmp1.u) + tmp2.s);
+                        break;
+                case DW_OP::bregx:
+                        tmp1.u = cur.uleb128();
+                        tmp2.s = cur.sleb128();
+                        stack.push_back((int64_t)ctx->reg(tmp1.u) + tmp2.s);
+                        break;
 
         // 2.5.1.3 Stack operations
       case DW_OP::dup:
@@ -305,6 +352,177 @@ expr_result expr::evaluate(
       case DW_OP::xor_:
         UBINOP(^);
         break;
+                        // 2.5.1.3 Stack operations
+                case DW_OP::dup:
+                        CHECK();
+                        stack.push_back(stack.back());
+                        break;
+                case DW_OP::drop:
+                        CHECK();
+                        stack.pop_back();
+                        break;
+                case DW_OP::pick:
+                        tmp1.u = cur.fixed<uint8_t>();
+                        CHECKN(tmp1.u);
+                        stack.push_back(stack.revat(tmp1.u));
+                        break;
+                case DW_OP::over:
+                        CHECKN(2);
+                        stack.push_back(stack.revat(1));
+                        break;
+                case DW_OP::swap:
+                        CHECKN(2);
+                        tmp1.u = stack.back();
+                        stack.back() = stack.revat(1);
+                        stack.revat(1) = tmp1.u;
+                        break;
+                case DW_OP::rot:
+                        CHECKN(3);
+                        tmp1.u = stack.back();
+                        stack.back() = stack.revat(1);
+                        stack.revat(1) = stack.revat(2);
+                        stack.revat(2) = tmp1.u;
+                        break;
+                case DW_OP::deref:
+                        tmp1.u = subsec->addr_size;
+                        goto deref_common;
+                case DW_OP::deref_size:
+                        tmp1.u = cur.fixed<uint8_t>();
+                        if (tmp1.u > subsec->addr_size)
+                                throw expr_error("DW_OP_deref_size operand exceeds address size");
+                deref_common:
+                        CHECK();
+                        stack.back() = ctx->deref_size(stack.back(), tmp1.u);
+                        break;
+                case DW_OP::xderef:
+                        tmp1.u = subsec->addr_size;
+                        goto xderef_common;
+                case DW_OP::xderef_size:
+                        tmp1.u = cur.fixed<uint8_t>();
+                        if (tmp1.u > subsec->addr_size)
+                                throw expr_error("DW_OP_xderef_size operand exceeds address size");
+                xderef_common:
+                        CHECKN(2);
+                        tmp2.u = stack.back();
+                        stack.pop_back();
+                        stack.back() = ctx->xderef_size(tmp2.u, stack.back(), tmp1.u);
+                        break;
+                case DW_OP::push_object_address:
+                        // XXX
+                        throw runtime_error("DW_OP_push_object_address not implemented");
+                case DW_OP::form_tls_address:
+                        CHECK();
+                        stack.back() = ctx->form_tls_address(stack.back());
+                        break;
+                case DW_OP::call_frame_cfa:
+                        // Horrible hack which just reads the frame pointer on x86
+                        tmp1.u = 6;
+                        stack.push_back((int64_t)ctx->reg(tmp1.u));
+                        break;
+                        // 2.5.1.4 Arithmetic and logical operations
+#define UBINOP(binop)                                                   \
+                        do {                                            \
+                                CHECKN(2);                              \
+                                tmp1.u = stack.back();                  \
+                                stack.pop_back();                       \
+                                tmp2.u = stack.back();                  \
+                                stack.back() = tmp2.u binop tmp1.u;     \
+                        } while (0)
+                case DW_OP::abs:
+                        CHECK();
+                        tmp1.u = stack.back();
+                        if (tmp1.s < 0)
+                                tmp1.s = -tmp1.s;
+                        stack.back() = tmp1.u;
+                        break;
+                case DW_OP::and_:
+                        UBINOP(&);
+                        break;
+                case DW_OP::div:
+                        CHECKN(2);
+                        tmp1.u = stack.back();
+                        stack.pop_back();
+                        tmp2.u = stack.back();
+                        tmp3.s = tmp1.s / tmp2.s;
+                        stack.back() = tmp3.u;
+                        break;
+                case DW_OP::minus:
+                        UBINOP(-);
+                        break;
+                case DW_OP::mod:
+                        UBINOP(%);
+                        break;
+                case DW_OP::mul:
+                        UBINOP(*);
+                        break;
+                case DW_OP::neg:
+                        CHECK();
+                        tmp1.u = stack.back();
+                        tmp1.s = -tmp1.s;
+                        stack.back() = tmp1.u;
+                        break;
+                case DW_OP::not_:
+                        CHECK();
+                        stack.back() = ~stack.back();
+                        break;
+                case DW_OP::or_:
+                        UBINOP(|);
+                        break;
+                case DW_OP::plus:
+                        UBINOP(+);
+                        break;
+                case DW_OP::plus_uconst:
+                        tmp1.u = cur.uleb128();
+                        CHECK();
+                        stack.back() += tmp1.u;
+                        break;
+                case DW_OP::shl:
+                        CHECKN(2);
+                        tmp1.u = stack.back();
+                        stack.pop_back();
+                        tmp2.u = stack.back();
+                        // C++ does not define what happens if you
+                        // shift by more bits than the width of the
+                        // type, so we handle this case specially
+                        if (tmp1.u < sizeof(tmp2.u)*8)
+                                stack.back() = tmp2.u << tmp1.u;
+                        else
+                                stack.back() = 0;
+                        break;
+                case DW_OP::shr:
+                        CHECKN(2);
+                        tmp1.u = stack.back();
+                        stack.pop_back();
+                        tmp2.u = stack.back();
+                        // Same as above
+                        if (tmp1.u < sizeof(tmp2.u)*8)
+                                stack.back() = tmp2.u >> tmp1.u;
+                        else
+                                stack.back() = 0;
+                        break;
+                case DW_OP::shra:
+                        CHECKN(2);
+                        tmp1.u = stack.back();
+                        stack.pop_back();
+                        tmp2.u = stack.back();
+                        // Shifting a negative number is
+                        // implementation-defined in C++.
+                        tmp3.u = (tmp2.s < 0);
+                        if (tmp3.u)
+                                tmp2.s = -tmp2.s;
+                        if (tmp1.u < sizeof(tmp2.u)*8)
+                                tmp2.u >>= tmp1.u;
+                        else
+                                tmp2.u = 0;
+                        // DWARF implies that over-shifting a negative
+                        // number should result in 0, not ~0.
+                        if (tmp3.u)
+                                tmp2.s = -tmp2.s;
+                        stack.back() = tmp2.u;
+                        break;
+                case DW_OP::xor_:
+                        UBINOP(^);
+                        break;
 #undef UBINOP
 
         // 2.5.1.5 Control flow operations

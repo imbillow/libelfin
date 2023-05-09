@@ -151,6 +151,20 @@ bool die::operator==(const die &o) const {
 
 bool die::operator!=(const die &o) const { return !(*this == o); }
 
+bool
+die::contains_section_offset(section_offset off) const
+{
+    auto contains_off = [off] (const die& d) { return off >= d.get_section_offset() && off < d.next; };
+
+    if (contains_off(*this)) return true;
+    
+    for (const auto& child : *this) {
+        if (contains_off(child)) return true;
+    }
+
+    return false;
+}
+
 DWARFPP_END_NAMESPACE
 
 size_t std::hash<dwarf::die>::operator()(const dwarf::die &a) const {
