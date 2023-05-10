@@ -2,6 +2,8 @@
 // Use of this source code is governed by an MIT license
 // that can be found in the LICENSE file.
 
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
 #ifndef DWARFPP_DW_HH_
 #define DWARFPP_DW_HH_
 
@@ -545,3 +547,5 @@ auto to_string(DW_LNE v) -> std::string;
 DWARFPP_END_NAMESPACE
 
 #endif
+
+#pragma clang diagnostic pop

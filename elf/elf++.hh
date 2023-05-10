@@ -67,7 +67,7 @@ class elf {
 
   auto operator=(const elf &o) -> elf & = default;
 
-  [[nodiscard]] auto valid() const -> bool { return !!m; }
+  [[nodiscard]] auto valid() const -> bool { return static_cast<bool>(m); }
 
   /**
    * Return the ELF file header in canonical form (ELF64 in
@@ -172,7 +172,7 @@ class segment {
    * Return true if this segment is valid and corresponds to a
    * segment in the ELF file.
    */
-  [[nodiscard]] auto valid() const -> bool { return !!m; }
+  [[nodiscard]] auto valid() const -> bool { return static_cast<bool>(m); }
 
   /**
    * Return the ELF section header in canonical form (ELF64 in
@@ -225,7 +225,7 @@ class section {
    * Return true if this section is valid and corresponds to a
    * section in the ELF file.
    */
-  [[nodiscard]] auto valid() const -> bool { return !!m; }
+  [[nodiscard]] auto valid() const -> bool { return static_cast<bool>(m); }
 
   /**
    * Return the ELF section header in canonical form (ELF64 in
@@ -288,7 +288,7 @@ class strtab {
   strtab() = default;
   strtab(const elf &f, const void *data, size_t size);
 
-  [[nodiscard]] auto valid() const -> bool { return !!m; }
+  [[nodiscard]] auto valid() const -> bool { return static_cast<bool>(m); }
 
   /**
    * Return the string at the given offset in this string table.
@@ -354,7 +354,7 @@ class symtab {
   symtab() = default;
   symtab(const elf &f, const void *data, size_t size, const strtab &strs);
 
-  [[nodiscard]] auto valid() const -> bool { return !!m; }
+  [[nodiscard]] auto valid() const -> bool { return static_cast<bool>(m); }
 
   class iterator {
     const elf f;
@@ -366,7 +366,7 @@ class symtab {
     friend class symtab;
 
    public:
-    auto operator*() const -> sym { return sym(f, pos, strs); }
+    auto operator*() const -> sym { return {f, pos, strs}; }
 
     auto operator++() -> iterator & { return *this += 1; }
 

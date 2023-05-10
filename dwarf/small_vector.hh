@@ -14,10 +14,10 @@ DWARFPP_BEGIN_NAMESPACE
 template <class T, unsigned Min>
 class small_vector {
  public:
-  typedef T value_type;
-  typedef value_type &reference;
-  typedef const value_type &const_reference;
-  typedef size_t size_type;
+  using value_type = T;
+  using reference = value_type &;
+  using const_reference = const value_type &;
+  using size_type = size_t;
 
   small_vector() : base((T *)buf), end(base), cap((T *)&buf[sizeof(T[Min])]) {}
 

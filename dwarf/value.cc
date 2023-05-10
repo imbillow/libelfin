@@ -145,7 +145,7 @@ auto value::as_rangelist() const -> rangelist {
   taddr cu_low_pc = cudie.has(DW_AT::low_pc) ? at_low_pc(cudie) : 0;
   auto sec = cu->get_dwarf().get_section(section_type::ranges);
   auto cusec = cu->data();
-  return rangelist(sec, off, cusec->addr_size, cu_low_pc);
+  return {sec, off, cusec->addr_size, cu_low_pc};
 }
 
 auto value::as_reference() const -> die {
@@ -214,7 +214,7 @@ void value::as_string(string &buf) const {
 auto value::as_string() const -> string {
   size_t size;
   const char *s = as_cstr(&size);
-  return string(s, size);
+  return {s, size};
 }
 
 auto value::as_cstr(size_t *size_out) const -> const char * {
@@ -253,11 +253,11 @@ void value::resolve_indirect(DW_AT name) {
   if (form != DW_FORM::indirect) return;
 
   cursor c(cu->data(), offset);
-  DW_FORM form;
+  DW_FORM vform;
   do {
-    form = (DW_FORM)c.uleb128();
-  } while (form == DW_FORM::indirect);
-  typ = attribute_spec(name, form).type;
+    vform = (DW_FORM)c.uleb128();
+  } while (vform == DW_FORM::indirect);
+  typ = attribute_spec(name, vform).type;
   offset = c.get_section_offset();
 }
 

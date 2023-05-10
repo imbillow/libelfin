@@ -297,10 +297,8 @@ symtab::iterator::iterator(const symtab &tab, const char *pos)
     stride = sizeof(Sym<Elf64>);
 }
 
-auto symtab::begin() const -> symtab::iterator {
-  return iterator(*this, m->data);
-}
+auto symtab::begin() const -> symtab::iterator { return {*this, m->data}; }
 
-auto symtab::end() const -> symtab::iterator { return iterator(*this, m->end); }
+auto symtab::end() const -> symtab::iterator { return {*this, m->end}; }
 
 ELFPP_END_NAMESPACE

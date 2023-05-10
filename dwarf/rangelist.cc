@@ -37,7 +37,7 @@ auto rangelist::begin() const -> rangelist::iterator {
   return end();
 }
 
-rangelist::iterator rangelist::end() { return {}; }
+auto rangelist::end() -> rangelist::iterator { return {}; }
 
 auto rangelist::contains(taddr addr) const -> bool {
   for (auto ent : *this)

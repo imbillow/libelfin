@@ -2,6 +2,8 @@
 // Use of this source code is governed by an MIT license
 // that can be found in the LICENSE file.
 
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
 #ifndef DWARFPP_HH_
 #define DWARFPP_HH_
 
@@ -148,7 +150,7 @@ class dwarf {
    * Return true if this object represents a DWARF file.
    * Default constructed dwarf objects are not valid.
    */
-  [[nodiscard]] auto valid() const -> bool { return !!m; }
+  [[nodiscard]] auto valid() const -> bool { return static_cast<bool>(m); }
 
   // XXX This allows the compilation units to be modified and
   // ties us to a vector.  Probably should return an opaque
@@ -214,7 +216,7 @@ class unit {
    * Return true if this object is valid.  Default constructed
    * unit objects are not valid.
    */
-  [[nodiscard]] auto valid() const -> bool { return !!m; }
+  [[nodiscard]] auto valid() const -> bool { return static_cast<bool>(m); }
 
   /**
    * Return the dwarf file this unit is in.
@@ -492,7 +494,7 @@ class die::iterator {
   die d;
 };
 
-inline die::iterator die::end() { return {}; }
+inline auto die::end() -> die::iterator { return {}; }
 
 /**
  * An exception indicating that a value is not of the requested type.
@@ -1081,7 +1083,7 @@ class line_table {
    * Return true if this object represents an initialized line
    * table.  Default constructed line tables are not valid.
    */
-  [[nodiscard]] auto valid() const -> bool { return !!m; }
+  [[nodiscard]] auto valid() const -> bool { return static_cast<bool>(m); }
 
   class file;
   class entry;
@@ -1512,3 +1514,5 @@ struct hash<dwarf::die> {
 }  // namespace std
 
 #endif
+
+#pragma clang diagnostic pop
